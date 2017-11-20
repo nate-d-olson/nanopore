@@ -2,6 +2,7 @@ import collections
 import glob
 import os
 import pprint
+import sys
 
 from admiral import jobmanagers
 from admiral import remote
@@ -57,7 +58,6 @@ def mapping_complete(metadata):
 ### Archiving
 
 def archive_run(run_base_path, run_name):
-    print("*"*30)
     chunks = glob.glob(f"{run_base_path}/*")
     chunks = [chunk for chunk in chunks if os.path.isdir(chunk)]
 
@@ -76,7 +76,6 @@ def get_archiving_args(metadata):
 
 def launch_archiving(metadata):
     args = get_archiving_args(metadata)
-    print(args)
 
     njobs = min(len(args), 128)
     job = remote.run_remote(
@@ -84,7 +83,7 @@ def launch_archiving(metadata):
         job_name="archive_fast5s", args=args, job_dir="output",
         overwrite=True, njobs=njobs, queue="owners", mem="8g")
 
-    print(jobmanagers.wait_for_jobs([job], progress=True))
+    print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
 
 ### Baseacalling
@@ -106,7 +105,7 @@ def get_basecalling_args(metadata, threads):
     return args
 
 def launch_basecalling(metadata):
-    threads = 9
+    threads = 8
     args = get_basecalling_args(metadata, threads)
     if len(args) == 0:
         print("No directories found for basecalling...")
@@ -123,7 +122,7 @@ def launch_basecalling(metadata):
         overwrite=True, njobs=njobs, queue="owners", 
         cpus=threads, mem=f"{8*threads}g")
 
-    print(jobmanagers.wait_for_jobs([job], progress=True))
+    print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
 
 ### Mapping
@@ -174,7 +173,7 @@ def launch_mapping(metadata):
         job_name="mapping", args=args, job_dir="output",
         overwrite=True, njobs=njobs, queue="owners", mem="32g", cpus=threads)
 
-    print(jobmanagers.wait_for_jobs([job], progress=True))
+    print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
 
 def launch_merge_bams(metadata):
@@ -194,7 +193,7 @@ def launch_merge_bams(metadata):
         job_name="merge_bams", args=args, job_dir="output",
         overwrite=True, njobs=njobs, queue="owners", mem="8g")
 
-    print(jobmanagers.wait_for_jobs([job], progress=True))
+    print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
 
 
@@ -210,26 +209,28 @@ def filter_completed_datasets(metadata):
 
     return to_run, completed
     
-def main():
+def main():      
     metadata = experiments.load_experiment_metadata()
-    metadata, completed = filter_completed_datasets(metadata)
+    if len(sys.argv) == 2:
+        flow_cell_id = sys.argv[1]
+        metadata = {flow_cell_id: metadata[flow_cell_id]}
+    else:
+        metadata, completed = filter_completed_datasets(metadata)
+
+        if len(completed) > 0:
+            print("-"*50)
+            print(f"Already completed: {','.join(completed)}")
+            print("...skipping.")
+            print("-"*50)
 
     pprint.pprint(metadata)
-    print(f"Already completed: {','.join(completed)}")
-
-    # print("*"*100 + "\n"*3 + "Only running for a single dataset" + "\n"*3 + "*"*100)
-    # metadata = {"FAH31140":metadata["FAH31140"]}
-    # import time
-    # time.sleep(3)
 
 
-    # launch_archiving(metadata)
-    # launch_basecalling(metadata)
-    # launch_mapping(metadata)
-    # launch_merge_bams(metadata)
+    launch_archiving(metadata)
+    launch_basecalling(metadata)
+    launch_mapping(metadata)
+    launch_merge_bams(metadata)
 
-    print(basecalling_complete(metadata))
-    print(mapping_complete(metadata))
 
 if __name__ == '__main__':
     main()
