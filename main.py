@@ -1,11 +1,4 @@
-"""
-1. make sure everything is tar-ed up already
-2. parallel basecalling
-3. merge fastqs
-4. mapping
-5. qc...
-
-"""
+import collections
 import glob
 import os
 import pprint
@@ -35,6 +28,9 @@ def fastq_dir(run_name):
 def mappings_dir(run_name):
     return f"{run_dir(run_name)}/aln"
 
+def combined_bam(run_name):
+    return f"{mappings_dir(run_name)}/{run_name}.combined.sorted.bam"
+
 
 def _jobmanager():
     return slurm.SLURM_Jobmanager(batch_dir="output", log_dir="output")
@@ -50,11 +46,13 @@ def basecalling_complete(metadata):
     for _, outpath, _, _ in get_basecalling_args(metadata, 0):
         if not os.path.exists(outpath):
             return False
-
     return True
 
-# def mapping_complete(metadata):
-#     for 
+def mapping_complete(metadata):
+    for _,_,_,run_name in iter_runs(metadata):
+        if not os.path.exists(combined_bam(run_name)):
+            return False
+    return True
 
 ### Archiving
 
@@ -149,9 +147,7 @@ def _get_merge_bams_args(run_name):
 
         bams.append(bam)
 
-    combined_path = f"{mappings_dir(run_name)}/{run_name}.combined.sorted.bam"
-
-    return [combined_path, bams]
+    return [combined_bam(run_name), bams]
 
 def get_merge_bams_args(metadata):
     args = []
@@ -202,16 +198,30 @@ def launch_merge_bams(metadata):
 
 
 
+def filter_completed_datasets(metadata):
+    to_run = collections.OrderedDict()
+    completed = []
+
+    for name, info in metadata.items():
+        if basecalling_complete({name:info}) and mapping_complete({name:info}):
+            completed.append(name)
+        else:
+            to_run[name] = info
+
+    return to_run, completed
     
 def main():
     metadata = experiments.load_experiment_metadata()
-
-    print("*"*100 + "\n"*3 + "Only running for a single dataset" + "\n"*3 + "*"*100)
-    metadata = {"FAH31140":metadata["FAH31140"]}
-    import time
-    time.sleep(3)
+    metadata, completed = filter_completed_datasets(metadata)
 
     pprint.pprint(metadata)
+    print(f"Already completed: {','.join(completed)}")
+
+    # print("*"*100 + "\n"*3 + "Only running for a single dataset" + "\n"*3 + "*"*100)
+    # metadata = {"FAH31140":metadata["FAH31140"]}
+    # import time
+    # time.sleep(3)
+
 
     # launch_archiving(metadata)
     # launch_basecalling(metadata)
@@ -219,6 +229,7 @@ def main():
     # launch_merge_bams(metadata)
 
     print(basecalling_complete(metadata))
+    print(mapping_complete(metadata))
 
 if __name__ == '__main__':
     main()
