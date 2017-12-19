@@ -24,7 +24,7 @@ def run_mapping(fastq, out_bam, threads=1):
 
 
 def merge_bams(combined_path, bams):
-    merge_command = f"samtools merge -O cram --reference {genome_path} {combined_path} {' '.join(bams)}"
+    merge_command = f"samtools merge -f -O cram --reference {genome_path} {combined_path} {' '.join(bams)}"
     run_command(merge_command)
 
     run_command(f"samtools index {combined_path}")

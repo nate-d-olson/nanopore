@@ -33,7 +33,7 @@ def load_experiment_metadata():
                 "date":row.Date,
                 "kit": row.Kit,
                 "name": row.Run,
-                "basecalled": istrue(row.Basecalled)
+                "completed": istrue(row.Completed)
             }
             indices[flowcell_id]["datasets"].append(cur_run)
             

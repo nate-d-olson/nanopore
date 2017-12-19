@@ -69,14 +69,15 @@ def archive_run(run_base_path, run_name):
 
 def get_archiving_args(metadata):
     args = []
-    for _,_,_,run_name in iter_runs(metadata):
+    for _,_,run_info,run_name in iter_runs(metadata):
         for chunk, tar_path in archive_run(fast5_dir(run_name), run_name):
-            args.append([chunk, tar_path])
+            should_remove = run_info["completed"]
+            args.append([chunk, tar_path, should_remove])
     return args
 
 def launch_archiving(metadata):
     args = get_archiving_args(metadata)
-
+    print(args)
     njobs = min(len(args), 128)
     job = remote.run_remote(
         fast5_archives.archive_chunk, _jobmanager(),
@@ -151,7 +152,11 @@ def _get_merge_bams_args(run_name):
 def get_merge_bams_args(metadata):
     args = []
     for _,_,_,run_name in iter_runs(metadata):
-        args.append(_get_merge_bams_args(run_name))
+        cur_args = _get_merge_bams_args(run_name)
+        if len(cur_args[1]) == 0:
+            print(f"No bams to merge {run_name}")
+            continue
+        args.append(cur_args)
 
     return args
 
@@ -171,7 +176,7 @@ def launch_mapping(metadata):
     job = remote.run_remote(
         mapping.run_mapping, _jobmanager(),
         job_name="mapping", args=args, job_dir="output",
-        overwrite=True, njobs=njobs, queue="owners", mem="32g", cpus=threads)
+        overwrite=True, njobs=njobs, queue="owners", mem="48g", cpus=threads)
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
