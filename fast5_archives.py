@@ -18,8 +18,8 @@ def archive_chunk(fast5_dir, tar_path, remove=False):
     if not validate_tar(fast5_dir, tar_path):
         raise Exception(f"Failed to completely tar {fast5_dir} into {tar_path}")
 
-    # if remove:
-    #     shutil.rmtree(fast5_dir)
+    if remove:
+        shutil.rmtree(fast5_dir)
         
 
 def validate_tar(original_dir, tar_path):

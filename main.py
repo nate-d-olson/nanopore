@@ -77,7 +77,11 @@ def get_archiving_args(metadata):
 
 def launch_archiving(metadata):
     args = get_archiving_args(metadata)
-    print(args)
+
+    if len(args) == 0:
+        print("Archiving complete; skipping...")
+        return
+    
     njobs = min(len(args), 128)
     job = remote.run_remote(
         fast5_archives.archive_chunk, _jobmanager(),
@@ -216,6 +220,7 @@ def filter_completed_datasets(metadata):
     
 def main():      
     metadata = experiments.load_experiment_metadata()
+    print(metadata)
     if len(sys.argv) == 2:
         flow_cell_id = sys.argv[1]
         metadata = {flow_cell_id: metadata[flow_cell_id]}
@@ -230,10 +235,16 @@ def main():
 
     pprint.pprint(metadata)
 
-
+    print("Archiving...")
     launch_archiving(metadata)
+
+    print("Baseacalling...")
     launch_basecalling(metadata)
+
+    print("Mapping...")
     launch_mapping(metadata)
+
+    print("Merging bams...")
     launch_merge_bams(metadata)
 
 
