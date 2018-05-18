@@ -16,6 +16,7 @@ def n50(values, fraction=0.5):
     
     return values[i]
     
+
 def coverages(lengths, cutoffs):
     covs = []
     for cutoff in cutoffs:
@@ -23,7 +24,32 @@ def coverages(lengths, cutoffs):
         covs.append(cur_lengths.sum() / 3.1e9)
     return covs
     
-def do_qc(path):
+
+def plot_coverages(path, lengths):
+    try:
+        from biorpy import r
+    except ImportError:
+        print("biorpy isn't installed; figures won't be generated (install from https://github.com/nspies/biorpy)")
+        return
+
+    r.pdf(path)
+    x = numpy.arange(0,0.5e6+1,1e4)
+    y = coverages(lengths, x)
+
+    r.plot(x/1e3, y, type="l", xlim=[0,575], lwd=2, cex=1.5,
+           xlab="read length (kb)", ylab="coverage by reads > length", main=f"coverage by mapped reads")
+
+    highlight_x = [0, 50e3, 100e3, 250e3, 500e3]
+    highlight_y = coverages(lengths, highlight_x)
+    r.points(numpy.array(highlight_x)/1e3, highlight_y, pch=20)
+    r.text(numpy.array(highlight_x)/1e3, highlight_y, 
+           ["{:.2f} ({:.1%})".format(i, i/highlight_y[0]) for i in highlight_y], pos=4)
+    r.mtext(f"{lengths.sum()/1e6:,.1f}mb total")
+
+    r.devoff()
+
+
+def do_qc(path, pdf_path=None):
     inf = pysam.AlignmentFile(path)
     
     read_lengths = []
@@ -39,9 +65,9 @@ def do_qc(path):
             continue
 
         read_lengths.append(read.query_alignment_length)
-        if count > 200000:
-            print("ENDING EARLY:", read)
-            break
+        # if count > 2000:
+        #     print("ENDING EARLY:", str(read)[:1000])
+        #     break
         
     read_lengths = numpy.array(read_lengths)
 
@@ -53,14 +79,17 @@ def do_qc(path):
     cutoffs = [0, 10e3, 25e3, 50e3, 100e3, 250e3, 500e3]
     covs = coverages(read_lengths, cutoffs)
     for cutoff, cov in zip(cutoffs, covs):
-        print(f" coverage by reads >= {cutoff:>10,}: {cov:.3f}x ({cov/covs[0]:6.1%})")
+        print(f" coverage by reads >= {int(cutoff):>10,}: {cov:.3f}x ({cov/covs[0]:6.1%})")
     
     print("Top read lengths:")
     read_lengths.sort()
     
     for length in read_lengths[:-11:-1]:
         print(f" {length:,}")
-                
+    
+    if pdf_path:
+        plot_coverages(pdf_path, read_lengths)
+
 
 if __name__ == "__main__":
-        do_qc(sys.argv[1])
+    do_qc(*sys.argv[1:])
