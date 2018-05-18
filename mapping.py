@@ -13,7 +13,9 @@ def run_command(command):
 def run_mapping(fastq, out_bam, threads=1):
     minimap2 = "minimap2"
 
-    map_command = f"{minimap2} -t {threads} -a -x map-ont {genome_path} {fastq} " \
+    # we specify -z because the default seems to spit out alignments that
+    # are not particularly contiguous 
+    map_command = f"{minimap2} -t {threads} -a -z 600,200 -x map-ont {genome_path} {fastq} " \
                   f"| samtools sort -m 1G -@{threads} -O cram --reference {genome_path} > {out_bam}\n"
 
     run_command(map_command)

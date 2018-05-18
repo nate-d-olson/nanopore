@@ -36,7 +36,7 @@ def combined_bam(run_name):
 def _jobmanager():
     return slurm.SLURM_Jobmanager(batch_dir="output", log_dir="output")
 
-def iter_runs(metadata):
+def iter_runs(metadata, exclude_basecalled=False):
     for flowcell_name, flowcell_info in metadata.items():
         for runinfo in flowcell_info["datasets"]:
             run_name = runinfo["name"]
@@ -46,12 +46,14 @@ def iter_runs(metadata):
 def basecalling_complete(metadata):
     for _, outpath, _, _ in get_basecalling_args(metadata, 0):
         if not os.path.exists(outpath):
+            print("Not found:", outpath)
             return False
     return True
 
 def mapping_complete(metadata):
     for _,_,_,run_name in iter_runs(metadata):
         if not os.path.exists(combined_bam(run_name)):
+            print("Not found:", combined_bam(run_name))
             return False
     return True
 
@@ -69,7 +71,7 @@ def archive_run(run_base_path, run_name):
 
 def get_archiving_args(metadata):
     args = []
-    for _,_,run_info,run_name in iter_runs(metadata):
+    for _,_,run_info,run_name in iter_runs(metadata, exclude_basecalled=True):
         for chunk, tar_path in archive_run(fast5_dir(run_name), run_name):
             should_remove = run_info["completed"]
             args.append([chunk, tar_path, should_remove])
@@ -95,7 +97,7 @@ def launch_archiving(metadata):
 
 def get_basecalling_args(metadata, threads):
     args = []
-    for _,flowcell_info,runinfo,run_name in iter_runs(metadata):      
+    for _,flowcell_info,runinfo,run_name in iter_runs(metadata, exclude_basecalled=True):
         os.makedirs(fastq_dir(run_name), exist_ok=True)
 
         for fast5_archive in glob.glob(f"{fast5_dir(run_name)}/{run_name}_*.tar"):
@@ -115,7 +117,7 @@ def launch_basecalling(metadata):
     if len(args) == 0:
         print("No directories found for basecalling...")
         return
-    
+
     njobs = min(len(args), 128)
     if njobs < len(args):
         # should use int(math.ceil(len(args)/128))) or something like that
@@ -147,7 +149,7 @@ def get_mapping_args(metadata, threads):
 def _get_merge_bams_args(run_name):
     bams = []
     for bam in glob.glob(f"{mappings_dir(run_name)}/*.sorted.bam"):
-        if "combined" in bam: continue
+        if bam.endswith("combined.sorted.bam"): continue
 
         bams.append(bam)
 
@@ -167,7 +169,7 @@ def get_merge_bams_args(metadata):
 def launch_mapping(metadata):
     threads = 4
     args = get_mapping_args(metadata, threads)
-
+    print(args)
     if len(args) == 0:
         print("No fastq files found for mapping...")
         return
@@ -200,7 +202,7 @@ def launch_merge_bams(metadata):
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
         job_name="merge_bams", args=args, job_dir="output",
-        overwrite=True, njobs=njobs, queue="owners", mem="8g")
+        overwrite=True, njobs=njobs, queue="owners", mem="16g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 

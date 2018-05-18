@@ -82,7 +82,7 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
 
     subprocess.check_call(f"pigz -c {pass_fastqs[0]} > {out_fastq_gz}", shell=True)
 
-    os.rename(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
+    shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
 
 def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads=1):
     print("extracting data to local storage...")
