@@ -27,26 +27,35 @@ def do_qc(path):
     inf = pysam.AlignmentFile(path)
     
     read_lengths = []
-    
+    unmapped_count = 0
+    unmapped_bases = 0
+
     for count, read in tqdm.tqdm(enumerate(inf)):
-        if read.is_unmapped or read.is_secondary or read.is_supplementary: continue
+        if read.is_secondary or read.is_supplementary:
+            continue
+        if read.is_unmapped:
+            unmapped_bases += read.query_length
+            unmapped_count += 1
+            continue
 
         read_lengths.append(read.query_alignment_length)
-        if count > 2000000:
+        if count > 200000:
             print("ENDING EARLY:", read)
             break
         
     read_lengths = numpy.array(read_lengths)
 
-    print(f"Number of mapped reads: {count:,}")
+    print(f"Number of mapped reads: {len(read_lengths):,} (excludes supplementary and secondary alignments)")
+    print(f"Number of unmapped reads: {unmapped_count:,}")
+    print(f"Number of unmapped bases: {unmapped_bases:,}")
+
     print(f"N50: {n50(read_lengths):,}")
-    cutoffs = [0, 50e3, 100e3, 250e3, 500e3]
+    cutoffs = [0, 10e3, 25e3, 50e3, 100e3, 250e3, 500e3]
     covs = coverages(read_lengths, cutoffs)
     for cutoff, cov in zip(cutoffs, covs):
         print(f" coverage by reads >= {cutoff:>10,}: {cov:.3f}x ({cov/covs[0]:6.1%})")
     
     print("Top read lengths:")
-
     read_lengths.sort()
     
     for length in read_lengths[:-11:-1]:
