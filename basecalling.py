@@ -41,7 +41,8 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
                       --kit {kit} \
                       -o fastq -q 0 \
                       -t {threads} \
-                      -s {outdir}"
+                      -s {outdir} \
+                      --basecaller.max_events=10000"
 
     command = command.format(
         flowcell=config["flowcell"],
