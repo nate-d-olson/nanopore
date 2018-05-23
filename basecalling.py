@@ -42,7 +42,7 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
                       -o fastq -q 0 \
                       -t {threads} \
                       -s {outdir} \
-                      --basecaller.max_events=10000"
+                      --basecaller.max_events=10000" # this is the default in the latest version of albacore
 
     command = command.format(
         flowcell=config["flowcell"],
