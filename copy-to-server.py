@@ -1,3 +1,8 @@
+# Simple copy, tar, rsync pipeline for sending fast5 files from a sequencing
+# run up to a server
+#
+# Requires python 3, and pacakages attrs and click
+
 import attr
 import click
 import datetime
@@ -29,6 +34,9 @@ class Options:
     remote_dir = attr.ib(converter=Path)
     user = attr.ib()
 
+def is_currently_sequencing():
+    ps = subprocess.check_output("ps -ef", shell=True).decode().splitlines()
+    return any(map(lambda z: ("MinKNOW" in z and "experiment" in z and "sequencing" in z), ps))
 
 def get_run_directories(data_dir, sample_name):
     yield from data_dir.glob(f"*_{sample_name}/fast5")
@@ -56,17 +64,22 @@ def should_archive_reads(read_batch):
     if num_reads >= 1000:
         return True
 
-    most_recent = max(read.stat().st_mtime for read in reads)
-    most_recent = datetime.datetime.fromtimestamp(most_recent)
-    since = datetime.datetime.now() - most_recent
+    if is_currently_sequencing():
+        return False
+        
+    return True
+    
+    # most_recent = max(read.stat().st_mtime for read in reads)
+    # most_recent = datetime.datetime.fromtimestamp(most_recent)
+    # since = datetime.datetime.now() - most_recent
 
-    if since > datetime.timedelta(minutes=5) and num_reads >= 50:
-        return True
+    # if since > datetime.timedelta(minutes=5) and num_reads >= 50:
+    #     return True
 
-    if since > datetime.timedelta(minutes=30) and num_reads >= 10:
-        return True
+    # if since > datetime.timedelta(minutes=30) and num_reads >= 10:
+    #     return True
 
-    return False
+    # return False
 
 def get_staging_area(staging_dir, read_batch):
     read_chunk = read_batch.read_dir.parts[-1]
