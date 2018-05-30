@@ -1,3 +1,8 @@
+# Simple copy, tar, rsync pipeline for sending fast5 files from a sequencing
+# run up to a server
+#
+# Requires python 3, and pacakages attrs and click
+
 import attr
 import click
 import datetime
@@ -29,6 +34,9 @@ class Options:
     remote_dir = attr.ib(converter=Path)
     user = attr.ib()
 
+def is_currently_sequencing():
+    ps = subprocess.check_output("ps -ef", shell=True).decode().splitlines()
+    return any(map(lambda z: ("MinKNOW" in z and "experiment" in z and "sequencing" in z), ps))
 
 def get_run_directories(data_dir, sample_name):
     yield from data_dir.glob(f"*_{sample_name}/fast5")
@@ -56,17 +64,22 @@ def should_archive_reads(read_batch):
     if num_reads >= 1000:
         return True
 
-    most_recent = max(read.stat().st_mtime for read in reads)
-    most_recent = datetime.datetime.fromtimestamp(most_recent)
-    since = datetime.datetime.now() - most_recent
+    if is_currently_sequencing():
+        return False
+        
+    return True
+    
+    # most_recent = max(read.stat().st_mtime for read in reads)
+    # most_recent = datetime.datetime.fromtimestamp(most_recent)
+    # since = datetime.datetime.now() - most_recent
 
-    if since > datetime.timedelta(minutes=5) and num_reads >= 50:
-        return True
+    # if since > datetime.timedelta(minutes=5) and num_reads >= 50:
+    #     return True
 
-    if since > datetime.timedelta(minutes=30) and num_reads >= 10:
-        return True
+    # if since > datetime.timedelta(minutes=30) and num_reads >= 10:
+    #     return True
 
-    return False
+    # return False
 
 def get_staging_area(staging_dir, read_batch):
     read_chunk = read_batch.read_dir.parts[-1]
@@ -75,7 +88,7 @@ def get_staging_area(staging_dir, read_batch):
         cur_staging_dir = \
             staging_dir / read_batch.sample_name / f"{read_batch.run_name}_{read_chunk}_{i}"
 
-        if not os.path.exists(cur_staging_dir):
+        if not (os.path.exists(cur_staging_dir) or os.path.exists(str(cur_staging_dir)+".tar")):
             break
         i += 1
 
@@ -86,7 +99,7 @@ def get_staging_area(staging_dir, read_batch):
 
 def do_archiving(options, read_batch):
     cur_staging_dir = get_staging_area(options.staging_dir, read_batch)
-
+    logger.info(f"Staging directory: {cur_staging_dir}")
     logger.info("moving...")
     count = 0
     for fast5 in read_batch.read_dir.glob("*.fast5"):
@@ -94,8 +107,8 @@ def do_archiving(options, read_batch):
         # break
         fast5.rename(cur_staging_dir / fast5.name)
         count += 1
-        if count >= 1000:
-            break
+        # if count >= 1000:
+            # break
 
     logger.info("tar'ing...")
     cur_tar_file = cur_staging_dir.with_name(cur_staging_dir.name + ".tar")
@@ -104,7 +117,7 @@ def do_archiving(options, read_batch):
     # the extended attributes, which by default are added to 
     # the tarfile as a ._x file for each file x; see
     # https://superuser.com/questions/61185/why-do-i-get-files-like-foo-in-my-tarball-on-os-x
-    tar_cmd = f"COPYFILE_DISABLE=1 tar -cf {cur_tar_file} {cur_staging_dir}"
+    tar_cmd = f"COPYFILE_DISABLE=1 tar -cf {cur_tar_file} -C {cur_staging_dir} ."
 
     logger.info(tar_cmd)
     subprocess.check_call(tar_cmd, shell=True)
@@ -116,10 +129,12 @@ def do_archiving(options, read_batch):
     # any connection errors previously, or data lost on server, etc
 
     cur_remote_dir = options.remote_dir / read_batch.sample_name / "fast5"
-    mkdir_and_rsync_cmd = f"mkdir -p {cur_remote_dir} && rsync"
-    rsync_cmd = f'rsync -aP --rsync-path "{mkdir_and_rsync_cmd}" ' \
-                f'{cur_tar_file} {options.user}@{options.server_addr}:{cur_remote_dir}'
 
+    ssh_mkdir_cmd = f"ssh {options.user}@{options.server_addr} mkdir -p {cur_remote_dir}"
+    logger.info(ssh_mkdir_cmd)
+    subprocess.check_call(ssh_mkdir_cmd, shell=True)
+    
+    rsync_cmd = f'rsync -aP {cur_tar_file} {options.user}@{options.server_addr}:{cur_remote_dir}'
     logger.info(rsync_cmd)
     subprocess.check_call(rsync_cmd, shell=True)
     
