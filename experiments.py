@@ -24,7 +24,7 @@ def load_experiment_metadata():
     
 def _load_their_experiments():
     df = pandas.read_csv(METADATA_URL_NOTT, parse_dates=["Date"])
-    print(df)
+    # print(df)
     indices = collections.defaultdict(dict)
     for flowcell_id, group in df.groupby("Flowcell ID"):
         assert len(group["Type"].unique()) == 1
