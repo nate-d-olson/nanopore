@@ -100,14 +100,15 @@ def get_basecalling_args(metadata, threads):
     for _,flowcell_info,runinfo,run_name in iter_runs(metadata, exclude_basecalled=True):
         os.makedirs(fastq_dir(run_name), exist_ok=True)
 
-        for fast5_archive in glob.glob(f"{fast5_dir(run_name)}/{run_name}_*.tar"):
+        for fast5_archive in glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar"):
             chunk_name = os.path.splitext(os.path.basename(fast5_archive))[0]+".fastq.gz"
             outpath = f"{fastq_dir(run_name)}/{chunk_name}"
 
             config = {"flowcell":flowcell_info["flowcell_type"],
                       "kit":runinfo["kit"]}
 
-            args.append([fast5_archive, outpath, config, threads]) 
+            if not os.path.exists(outpath) or (os.path.getmtime(outpath) < os.path.getmtime(fast5_archive)):
+                args.append([fast5_archive, outpath, config, threads]) 
 
     return args
 
@@ -118,15 +119,17 @@ def launch_basecalling(metadata):
         print("No directories found for basecalling...")
         return
 
+    print(f"Running basecalling on {len(args)} fast5 files...")
+    
     njobs = min(len(args), 128)
-    if njobs < len(args):
-        # should use int(math.ceil(len(args)/128))) or something like that
-        raise Exception("NEED TO ADJUST RUN TIME accordingly")
+    # if njobs < len(args):
+    #     # should use int(math.ceil(len(args)/128))) or something like that
+    #     raise Exception("NEED TO ADJUST RUN TIME accordingly")
 
     job = remote.run_remote(
         basecalling.run_basecalling_locally, _jobmanager(),
         job_name="basecalling", args=args, job_dir="output",
-        overwrite=True, njobs=njobs, queue="owners", 
+        overwrite=True, njobs=njobs, queue="msalit,owners", 
         cpus=threads, mem=f"{8*threads}g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
@@ -169,15 +172,16 @@ def get_merge_bams_args(metadata):
 def launch_mapping(metadata):
     threads = 4
     args = get_mapping_args(metadata, threads)
-    print(args)
+    print(f"Aligning {len(args)} fastq files...")
+    
     if len(args) == 0:
         print("No fastq files found for mapping...")
         return
         
     njobs = min(len(args), 128)
-    if njobs < len(args):
-        # should use int(math.ceil(len(args)/128))) or something like that
-        raise Exception("NEED TO ADJUST RUN TIME accordingly")
+    # if njobs < len(args):
+    #     # should use int(math.ceil(len(args)/128))) or something like that
+    #     raise Exception("NEED TO ADJUST RUN TIME accordingly")
 
     job = remote.run_remote(
         mapping.run_mapping, _jobmanager(),
@@ -195,14 +199,14 @@ def launch_merge_bams(metadata):
         return
         
     njobs = min(len(args), 128)
-    if njobs < len(args):
-        # should use int(math.ceil(len(args)/128))) or something like that
-        raise Exception("NEED TO ADJUST RUN TIME accordingly")
+    # if njobs < len(args):
+    #     # should use int(math.ceil(len(args)/128))) or something like that
+    #     raise Exception("NEED TO ADJUST RUN TIME accordingly")
 
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
         job_name="merge_bams", args=args, job_dir="output",
-        overwrite=True, njobs=njobs, queue="owners", mem="16g")
+        overwrite=True, njobs=njobs, queue="owners", cpus=4, mem="24g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
