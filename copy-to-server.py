@@ -153,9 +153,10 @@ def run_copy(options, sample_name):
     return len(read_batches)
 
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
-@click.command()
+@click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("data-dir")#, help="the reads directory, eg /Library/MinKNOW/data/reads")
 @click.argument("sample-name")
 @click.argument("staging-dir")
