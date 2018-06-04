@@ -5,6 +5,7 @@ set -o pipefail
 combine_fast5s () {
     args=""
     subdirs=`find ${input_dir} -maxdepth 1 -type d`
+    # subdirs=`find ${input_dir} -maxdepth 1 -type d -printf "%T@ %f\n" | sort | cut -d' ' -f2`
     total_size=0
     chunk=1
     for run_dir in ${subdirs}; do
@@ -12,11 +13,10 @@ combine_fast5s () {
         # check to see if the current dir would put us past ~50GB
         cur_size=`du -s ${run_dir}/fast5/`
         cur_size=($cur_size)
-        let total_size=${total_size}+cur_size
 
         # if so, let's flush the fast5s so far
-        echo ">>>>>>>>>>>${total_size}"
-        if (( total_size > 50000000 )); then
+        echo ">>>>>>> ${run_dir} ${total_size}"
+        if (( total_size+cur_size > 50000000 )); then
             echo "FLUSHING..."
             echo ${args}
 
@@ -28,6 +28,7 @@ combine_fast5s () {
         fi
 
         # add the current fast5 archives
+        let total_size=${total_size}+cur_size
         for fast5 in `find ${run_dir}/fast5/ -name "*.tar"`; do
             cur_name=`basename ${run_dir}`
             args="${fast5},${cur_name} ${args}"
