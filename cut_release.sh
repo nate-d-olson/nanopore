@@ -2,6 +2,44 @@
 
 set -o pipefail
 
+combine_fast5s () {
+    args=""
+    subdirs=`find ${input_dir} -maxdepth 1 -type d`
+    total_size=0
+    chunk=1
+    for run_dir in ${subdirs}; do
+        [ ! -d ${run_dir}/fast5/ ] && continue
+        # check to see if the current dir would put us past ~50GB
+        cur_size=`du -s ${run_dir}/fast5/`
+        cur_size=($cur_size)
+        let total_size=${total_size}+cur_size
+
+        # if so, let's flush the fast5s so far
+        echo ">>>>>>>>>>>${total_size}"
+        if (( total_size > 50000000 )); then
+            echo "FLUSHING..."
+            echo ${args}
+
+            combined_fast5=${output}.raw_fast5s.${chunk}.tar
+            python3 fast5_archives.py ${combined_fast5} ${args}
+            let chunk++
+            args=""
+            total_size=0
+        fi
+
+        # add the current fast5 archives
+        for fast5 in `find ${run_dir}/fast5/ -name "*.tar"`; do
+            cur_name=`basename ${run_dir}`
+            args="${fast5},${cur_name} ${args}"
+        done
+    done
+
+    # do one final flush
+    echo "FINAL FLUSH..."
+    echo ${args}
+    python3 fast5_archives.py ${combined_fast5} ${args}
+}
+
 
 cat_fastqs () {
     echo "Concatenating fastqs..."
@@ -67,11 +105,18 @@ if [ -z ${output} ]; then
     exit
 fi
 
+if [ "${output:0:1}" = "/" ]; then
+    echo "Argument 1 should be a release name, not a full file path"
+    exit
+fi
+
+input_dir=/oak/stanford/groups/msalit/nspies/nanopore/raw
 output_dir=/oak/stanford/groups/msalit/nspies/nanopore/release/${output}
 mkdir -p ${output_dir}
 output=$output_dir/$output
 fastq=${output}.fastq.gz
 
-cat_fastqs
-validate_combined_fastq
-map_reads
+combine_fast5s
+# cat_fastqs
+# validate_combined_fastq
+# map_reads
