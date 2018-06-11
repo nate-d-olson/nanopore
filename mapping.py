@@ -1,12 +1,14 @@
 import subprocess
+import sys
 
 genome_path = "/oak/stanford/groups/msalit/shared/genomes/hg38/" \
               "GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna"
 
 
 def run_command(command):
-    print(f"Running command '{command}'...")
-
+    sys.stderr.write(f"Running command '{command}'...")
+    sys.stderr.flush()
+    
     subprocess.check_call(command, shell=True)
 
 

@@ -145,7 +145,13 @@ def get_bam_stats(bam_path):
     bases = []
     read_ids = []
 
-    for read in pysam.AlignmentFile(bam_path):
+    try:
+        bam = pysam.AlignmentFile(bam_path)
+    except ValueError:
+        print(f"Error reading from {bam_path}...")
+        raise
+
+    for read in bam:
         if read.is_unmapped or read.is_secondary: continue
         
         read_ids.append(read.query_name)        
