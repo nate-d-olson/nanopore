@@ -1,18 +1,11 @@
-import collections
 import datetime
 import glob
 import gzip
 import numpy
 import os
 import pandas
-import pickle
-import pprint
 import pysam
-import shutil
-import sys
-import tqdm
-import uuid
-import yaml
+
 
 from biorpy import r, iimage, plotting
 from ont_fast5_api.fast5_file import Fast5File

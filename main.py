@@ -224,7 +224,7 @@ def filter_completed_datasets(metadata):
 
     return to_run, completed
     
-def main():      
+def main():
     metadata = experiments.load_experiment_metadata()
     print(metadata)
     if len(sys.argv) == 2:
@@ -240,6 +240,11 @@ def main():
             print("-"*50)
 
     pprint.pprint(metadata)
+
+    if not basecalling.is_albacore_installed():
+        print("[ERROR] ONT basecalling script read_fast5_basecaller.py (albacore) must \n"
+              "[ERROR] be installed and accessible from the current environment.")
+        sys.exit(1)
 
     print("Archiving...")
     launch_archiving(metadata)

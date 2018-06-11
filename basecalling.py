@@ -12,6 +12,14 @@ def wc(path):
         count += 1
     return count
 
+def is_albacore_installed():
+    try:
+        print("Checking albacore (ONT basecaller) is installed and can be run...")
+        subprocess.check_call("read_fast5_basecaller.py -v", shell=True)
+        return True
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return False
+
 def pull_raw_data(fast5_archive_path):
     """
     untars a fast5 archive onto the local hard-drive
