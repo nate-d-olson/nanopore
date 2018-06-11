@@ -1,4 +1,4 @@
-## Set-up
+# Set-up
 
 Run the following commands in a python 3.6 virtualenv:
 
@@ -7,7 +7,17 @@ curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.p
 poetry install
 ```
 
-Then install the albacore basecaller from [here](https://community.nanoporetech.com/downloads).
+For server side installations, download and install the albacore basecaller from [here](https://community.nanoporetech.com/downloads). This is not necessary on the sequencing machines.
+
+# Sequencer-side
+
+## Copying to server
+
+To run the copying script: `python copy-to-server.py --user <user_name> /Library/MinKNOW/data/reads <sample_name> ~/temp`, where **sample_name** must be the name of the run specified in MinKNOW. For example, if your output files are ending up in the sub-directory `20180124_2338_180124_MyRunName`, you would specify `MyRunName`. All runs using that name will be uploaded, allowing for restarts (the same name must be used each subsequent re-run).
+
+The script can be started before, during, or after a run. It will continue running until cancelled using ctrl-c. It will copy files over once enough have been produced (in batches of at least 1000), and will copy over remaining files after sequencing has stopped running. The `~/temp` directory is where the raw fast5 files will be moved to, then combined together into .tar files which are subsequently rsync'ed to the server.
+
+# Server-side
 
 ## Running
 
