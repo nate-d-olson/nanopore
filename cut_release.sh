@@ -118,6 +118,6 @@ output=$output_dir/$output
 fastq=${output}.fastq.gz
 
 combine_fast5s
-# cat_fastqs
-# validate_combined_fastq
-# map_reads
+cat_fastqs
+validate_combined_fastq
+map_reads
