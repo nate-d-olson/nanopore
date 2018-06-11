@@ -1,7 +1,9 @@
-# Simple copy, tar, rsync pipeline for sending fast5 files from a sequencing
-# run up to a server
-#
-# Requires python 3, and pacakages attrs and click
+"""
+Simple copy, tar, rsync pipeline for sending fast5 files from a sequencing
+run up to a server
+
+Requires python 3.6, and pacakages attrs and click
+"""
 
 import attr
 import click
@@ -160,15 +162,41 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument("data-dir")#, help="the reads directory, eg /Library/MinKNOW/data/reads")
 @click.argument("sample-name")
 @click.argument("staging-dir")
-@click.option("--event-loop-interval", default=5, type=float)
-@click.option("--server", default="oak-dtn.stanford.edu")
-@click.option("--remote-dir", default="/oak/stanford/groups/msalit/nspies/nanopore/raw")
-@click.option("--user", default=getpass.getuser())
+@click.option("--event-loop-interval", default=5, type=float, show_default=True,
+    help="How long to wait in seconds before looking for additional fast5 files (seconds)")
+@click.option("--server", default="oak-dtn.stanford.edu", show_default=True,
+    help="Server to copy the files to")
+@click.option("--remote-dir", default="/oak/stanford/groups/msalit/nspies/nanopore/raw",
+    show_default=True, help="Directory on remote server to copy files to")
+@click.option("--user", default=getpass.getuser(),
+    show_default=True, help="User name on remote server")
 def main(data_dir, sample_name, staging_dir, event_loop_interval, server, remote_dir, user):
+    """
+    Copy fast5 files from a nanopore sequencing run to the server.
 
-    # data_dir = Path(data_dir)
-    # staging_dir = Path(staging_dir)
+    The script can be started before, during, or after a run. It
+    will continue running until cancelled using ctrl-c. It will copy
+    files over once enough have been produced (in batches of at least
+    1000), and will copy over remaining files after sequencing has
+    stopped running.
+
+    DATA_DIR: the location of the MinKNOW output; typically this is
+    /Library/MinKNOW/data/reads.
+
+    SAMPLE_NAME: the run name provided to MinKNOW. For example, if you
+    told MinKNOW your run name was MyRunName, MinKNOW would output
+    to $DATA_DIR/20180124_2338_180124_MyRunName. All runs named MyRunNAME
+    will be copied, allowing the user to combine data from restarted runs,
+    specifying the same run name over multiple re-runs.
+
+    STAGING_DIR: the location that raw fast5 files will be moved to,
+    and subsequently archived into tar files prior to copying. For
+    example, ~/staging. This is where the (tar'ed) files will remain
+    on the local machine after the pipeline finishes.
+    """
+
     options = Options(data_dir, staging_dir, server, remote_dir, user)
+    
     # poor man's main loop
     t0 = 0
 
@@ -187,5 +215,14 @@ def main(data_dir, sample_name, staging_dir, event_loop_interval, server, remote
 
         t0 = t1
 
+def print_help_msg(command):
+    with click.Context(command) as ctx:
+        click.echo(command.get_help(ctx))
+
 if __name__ == '__main__':
+    import sys
+    if len(sys.argv) == 1:
+        print_help_msg(main)
+        sys.exit()
+
     main()

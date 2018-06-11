@@ -1,3 +1,9 @@
+"""
+Untars fast5 files to local storage, performs basecalling with albacore, then puts 
+the resulting fastq and sequencing_summary files at the specified location in
+shared storage.
+"""
+
 import glob
 import tempfile
 import os
@@ -93,6 +99,7 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
     subprocess.check_call(f"pigz -c {' '.join(pass_fastqs)} > {out_fastq_gz}", shell=True)
 
     shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
+
 
 def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads=1):
     print("extracting data to local storage...")
