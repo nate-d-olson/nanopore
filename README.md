@@ -4,6 +4,8 @@ Run the following commands in a python 3.6 virtualenv:
 
 ```
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+git clone https://github.com/nspies/nanopore.git
+cd nanopore
 poetry install
 ```
 
