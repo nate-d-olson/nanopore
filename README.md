@@ -1,6 +1,18 @@
-# Set-up
+This nanopore pipeline was developed for processing GIAB nanopore data. The following documentation is intended for group members running the pipeline on the Stanford Sherlock cluster. 
 
-Run the following commands in a python 3.6 virtualenv:
+# Set-up
+Create a python 3.6 virtualenv for installing pipeline dependencies
+```
+## Load required modules 
+module load readline R python/3.6.1
+## Create and activate virtualenv
+virtualenv -p python3 nanopore_env
+source nanopore_env/bin/activate
+```
+
+The python package poetry is used to install this package and its dependencies.
+
+Run the following commands in the python 3.6 virtualenv:
 
 ```
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
@@ -9,7 +21,22 @@ cd nanopore
 poetry install
 ```
 
+
+
+## Installing Albacore basecaller.  
 For server side installations, download and install the albacore basecaller from [here](https://community.nanoporetech.com/downloads). This is not necessary on the sequencing machines.
+Link to Albacore wheel file is available on the Nanopore community page under software downloads. 
+You will need to register for an account to access the community page. 
+
+```
+wget https://mirror.oxfordnanoportal.com/software/analysis/ont_albacore-2.3.1-cp36-cp36m-manylinux1_x86_64.whl
+pip install ont_albacore-2.3.1-cp36-cp36m-manylinux1_x86_64.whl
+```
+
+## Accessing data
+Contact the group data administrator to get access to OAK. 
+
+With the dependencies installed and appropriate permissions you can now run the pipeline. 
 
 # Sequencer-side
 
