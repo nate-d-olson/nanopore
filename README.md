@@ -28,9 +28,11 @@ For server side installations, download and install the albacore basecaller from
 Link to Albacore wheel file is available on the Nanopore community page under software downloads. 
 You will need to register for an account to access the community page. 
 
+Update the following commands with links to the latest version of albacore:
+
 ```
-wget https://mirror.oxfordnanoportal.com/software/analysis/ont_albacore-2.3.1-cp36-cp36m-manylinux1_x86_64.whl
-pip install ont_albacore-2.3.1-cp36-cp36m-manylinux1_x86_64.whl
+wget https://mirror.oxfordnanoportal.com/software/analysis/ont_albacore-<version>-cp36-cp36m-manylinux1_x86_64.whl
+pip install ont_albacore-<version>-cp36-cp36m-manylinux1_x86_64.whl
 ```
 
 ## Accessing data
