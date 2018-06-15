@@ -1,9 +1,9 @@
 This nanopore pipeline was developed for processing GIAB nanopore data. The following documentation is intended for group members running the pipeline on the Stanford Sherlock cluster. 
 
 # Set-up
-Create a python 3.6 virtualenv for installing pipeline dependencies
+Create a python 3.6 virtualenv for installing pipeline dependencies. The following commands will work on sherlock:
 ```
-## Load required modules 
+## Load required modules - ONLY ON SHERLOCK
 module load readline R python/3.6.1
 ## Create and activate virtualenv
 virtualenv -p python3 nanopore_env
