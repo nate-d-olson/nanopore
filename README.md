@@ -23,7 +23,9 @@ poetry install
 
 
 
-## Installing Albacore basecaller.  
+## Installing Depencies 
+
+### Albacore basecaller.  
 For server side installations, download and install the albacore basecaller from [here](https://community.nanoporetech.com/downloads). This is not necessary on the sequencing machines.
 Link to Albacore wheel file is available on the Nanopore community page under software downloads. 
 You will need to register for an account to access the community page. 
@@ -34,6 +36,14 @@ Update the following commands with links to the latest version of albacore:
 wget https://mirror.oxfordnanoportal.com/software/analysis/ont_albacore-<version>-cp36-cp36m-manylinux1_x86_64.whl
 pip install ont_albacore-<version>-cp36-cp36m-manylinux1_x86_64.whl
 ```
+
+### Minimap2
+For mapping long ONT reads. 
+```
+git clone https://github.com/lh3/minimap2
+cd minimap2 && make
+```
+
 
 ## Accessing data
 Contact the group data administrator to get access to OAK. 
@@ -52,7 +62,14 @@ The script can be started before, during, or after a run. It will continue runni
 
 ## Running
 
-All of the following require the activation of the virtualenv created above.
+All of the following require the activation of the virtualenv created above. 
+The following modules are required for running the pipeline:
+
+```
+module load python/3.6.1 R biology samtools/1.8
+```
+
+__Note__ make sure to load python/3.6.1 module before activating the virtualenv. 
 
 ### Per-sample basecalling and alignment scripts
 
@@ -62,7 +79,7 @@ This requires the flowcell to have been entered properly into the google spreads
 
 ### Per-sample QC
 
-To run: `bash run_qc_notebook.sh <qc.html>`, where you should replace **qc.html** with the appropriate output file for the formatted results notebook. 
+To run: `bash run_qc_notebook.sh <qc.html>`, where you should replace **qc.html** with the appropriate output file for the formatted results notebook. Execute script within repo directory or have `qc.ipynb` in your path.  
 
 ### Cutting a release
 
