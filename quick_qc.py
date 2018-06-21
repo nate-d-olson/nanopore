@@ -56,7 +56,7 @@ def do_qc(path, pdf_path=None):
     
     if pdf_path and r:
         r.pdf(pdf_path)
-        qc.plot_coverages(pdf_path, read_lengths)
+        qc.plot_coverages(read_lengths)
         r.devoff()
 
 
