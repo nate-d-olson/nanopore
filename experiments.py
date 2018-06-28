@@ -56,7 +56,7 @@ def _load_their_experiments():
 
     
 def _load_our_experiments():
-    df = pandas.read_csv(METADATA_URL, parse_dates=["Date"])
+    df = pandas.read_csv(METADATA_URL, parse_dates=["Date"]).dropna(subset=["Run"])
         
     indices = collections.defaultdict(dict)
     for flowcell_id, group in df.groupby("Flowcell ID"):
