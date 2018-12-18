@@ -41,7 +41,7 @@ def is_currently_sequencing():
     return any(map(lambda z: ("MinKNOW" in z and "experiment" in z and "sequencing" in z), ps))
 
 def get_run_directories(data_dir, sample_name):
-    yield from data_dir.glob(f"*_{sample_name}/fast5")
+    yield from data_dir.glob(f"*/{sample_name}/*/fast5_pass")
 
 def get_read_batches(data_dir, sample_name):
     for run_dir in get_run_directories(data_dir, sample_name):
