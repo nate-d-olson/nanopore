@@ -41,7 +41,7 @@ def is_currently_sequencing():
     return any(map(lambda z: ("MinKNOW" in z and "experiment" in z and "sequencing" in z), ps))
 
 def get_run_directories(data_dir, sample_name):
-    yield from data_dir.glob(f"*_{sample_name}/fast5")
+    yield from data_dir.glob(f"*/{sample_name}/*/fast5_pass")
 
 def get_read_batches(data_dir, sample_name):
     for run_dir in get_run_directories(data_dir, sample_name):
@@ -112,7 +112,7 @@ def do_archiving(options, read_batch):
         # if count >= 1000:
             # break
 
-    logger.info("tar'ing...")
+    logger.info(f"tar'ing {cur_staging_dir}...")
     cur_tar_file = cur_staging_dir.with_name(cur_staging_dir.name + ".tar")
 
     # this adjust the behavior of tar on macOS X to ignore
@@ -125,20 +125,23 @@ def do_archiving(options, read_batch):
     subprocess.check_call(tar_cmd, shell=True)
     shutil.rmtree(cur_staging_dir)
 
+def do_copy(options, sample_name):
     logger.info("copying to server...")
 
     # this should run separately, so we rsync everything in case there were
     # any connection errors previously, or data lost on server, etc
 
-    cur_remote_dir = options.remote_dir / read_batch.sample_name / "fast5"
+    cur_remote_dir = options.remote_dir / sample_name / "fast5"
+    staging_dir = options.staging_dir / sample_name
 
     ssh_mkdir_cmd = f"ssh {options.user}@{options.server_addr} mkdir -p {cur_remote_dir}"
     logger.info(ssh_mkdir_cmd)
     subprocess.check_call(ssh_mkdir_cmd, shell=True)
     
-    rsync_cmd = f'rsync -aP {cur_tar_file} {options.user}@{options.server_addr}:{cur_remote_dir}'
-    logger.info(rsync_cmd)
-    subprocess.check_call(rsync_cmd, shell=True)
+    for cur_tar_file in staging_dir.glob("*.tar"):
+        rsync_cmd = f'rsync -aP {cur_tar_file} {options.user}@{options.server_addr}:{cur_remote_dir}'
+        logger.info(rsync_cmd)
+        subprocess.check_call(rsync_cmd, shell=True)
     
     logger.info("...done")
 
@@ -208,6 +211,7 @@ def main(data_dir, sample_name, staging_dir, event_loop_interval, server, remote
 
         logger.info("looping")
         count = run_copy(options, sample_name)
+        do_copy(options, sample_name)
 
         if count == 0:
             logger.info(f"No read directories found for sample name {sample_name} in "
