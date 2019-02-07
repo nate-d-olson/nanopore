@@ -15,7 +15,10 @@ import mapping
 
 # import slurm
 
-BASE_PATH = "/oak/stanford/groups/msalit/nspies/nanopore"
+# BASE_PATH = "/oak/stanford/groups/msalit/nspies/nanopore"
+## Path for testing
+BASE_PATH = "/oak/stanford/groups/msalit/ndolson/nanopore-test"
+
 
 def run_dir(run_name):
     return f"{BASE_PATH}/raw/{run_name}"
