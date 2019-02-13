@@ -103,9 +103,20 @@ def get_basecalling_args(metadata, threads):
     for _,flowcell_info,runinfo,run_name in iter_runs(metadata, exclude_basecalled=True):
         os.makedirs(fastq_dir(run_name), exist_ok=True)
 
-        for fast5_archive in glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar"):
+        ## List of tar'd fast5s or multi-seq fast5s
+        fast5s = glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar")
+
+        ## Code for multi-fast5 file format
+        # if len(fast5s) == 0 and glob.glob(f"{fast5_dir(run_name)}/*.fast5"):
+            # fast5s = fast5_dir(run_name)
+        
+        # fast5s = glob.glob(f"{fast5_dir(run_name)}/*.fast5") + glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar")
+
+        # for fast5_archive in glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar"):
+        for fast5_archive in fast5s:
             chunk_name = os.path.splitext(os.path.basename(fast5_archive))[0]+".fastq.gz"
             outpath = f"{fastq_dir(run_name)}/{chunk_name}"
+            # outdir = f"{fastq_dir(run_name)}/"
 
             config = {"flowcell":flowcell_info["flowcell_type"],
                       "kit":runinfo["kit"]}
@@ -242,24 +253,24 @@ def main():
             print("...skipping.")
             print("-"*50)
 
-    pprint.pprint(metadata)
+    # pprint.pprint(metadata)
 
-    if not basecalling.is_albacore_installed():
-        print("[ERROR] ONT basecalling script read_fast5_basecaller.py (albacore) must \n"
-              "[ERROR] be installed and accessible from the current environment.")
-        sys.exit(1)
+    # if not basecalling.is_albacore_installed():
+    #     print("[ERROR] ONT basecalling script read_fast5_basecaller.py (albacore) must \n"
+    #           "[ERROR] be installed and accessible from the current environment.")
+    #     sys.exit(1)
 
-    print("Archiving...")
-    launch_archiving(metadata)
+    # print("Archiving...")
+    # launch_archiving(metadata)
 
-    print("Baseacalling...")
+    print("Basecalling...")
     launch_basecalling(metadata)
 
-    print("Mapping...")
-    launch_mapping(metadata)
+    # print("Mapping...")
+    # launch_mapping(metadata)
 
-    print("Merging bams...")
-    launch_merge_bams(metadata)
+    # print("Merging bams...")
+    # launch_merge_bams(metadata)
 
 
 if __name__ == '__main__':

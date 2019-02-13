@@ -34,12 +34,15 @@ def pull_raw_data(fast5_archive_path):
 
     local_dir = os.environ["LOCAL_SCRATCH"]
     temp_dir = tempfile.TemporaryDirectory(dir=local_dir)
+
+    ## Check if archived fast5s or directory of fast5s
     fast5_archive = tarfile.TarFile(fast5_archive_path)
 
     # if we need the subdirectory name, probably unnecessary
     # base = fast5_archive.members[0].name
-    fast5_archive.extractall(path=temp_dir.name)
 
+    fast5_archive.extractall(path=temp_dir.name)
+        
     return temp_dir
 
 
@@ -50,67 +53,93 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
     """
 
     workingdir = tempfile.TemporaryDirectory()
-    
-    command = "read_fast5_basecaller.py \
-                      --flowcell {flowcell} \
-                      --kit {kit} \
-                      -o fastq -q 0 \
-                      -t {threads} \
-                      -s {outdir} \
-                      --basecaller.max_events=10000" # this is the default in the latest version of albacore
+
+    ## Albacore command
+    # command = "read_fast5_basecaller.py \
+    #                   --flowcell {flowcell} \
+    #                   --kit {kit} \
+    #                   -o fastq -q 0 \
+    #                   -t {threads} \
+    #                   -s {outdir} \
+    #                   --basecaller.max_events=10000" # this is the default in the latest version of albacore
+
+    ## Guppy command V2.3.1
+    command = "guppy_basecaller \
+		            --input_path {fast5_path} \
+                    --save_path {outdir} \
+                    --flowcell {flowcell} \
+                    --kit {kit} \
+                    --num_callers {threads}"
 
     command = command.format(
+        fast5_path=fast5_paths,
+        outdir=workingdir.name,
         flowcell=config["flowcell"],
         kit=config["kit"],
-        threads=threads,
-        outdir=workingdir.name)
+        threads=threads)
 
-    stdin = "\n".join(fast5_paths)
+    ## Guppy command V2.3.1 with flip-flop for flowcell: FLO-MIN106 and kit:SQK-RAD004
+
+    command = "guppy_basecaller \
+		            --input_path {fast5_path} \
+                    --save_path {outdir} \
+                    -c dna_r9.4.1_450bps_flipflop.cfg \
+                    --num_callers {threads}"
+
+    command = command.format(
+        fast5_path=fast5_paths,
+        outdir=workingdir.name,
+        threads=threads)
+
+    ## Albacore
+    # stdin = "\n".join(fast5_paths)
+
     
+    # process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE)
+    # process.communicate(input=stdin.encode())
+
+    ## For guppy not using standard input to pass list of fast5s
+    print("Guppy command")
     print(command)
-    
-    process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE)
-    process.communicate(input=stdin.encode())
-    
-    pass_fastqs = glob.glob(f"{workingdir.name}/workspace/pass/*.fastq")
+    subprocess.run(command, shell = True)
+
+    # pass_fastqs = glob.glob(f"{workingdir.name}/workspace/pass/*.fastq")
+    out_fastqs = glob.glob(f"{workingdir.name}/*.fastq")
     fail_fastqs = glob.glob(f"{workingdir.name}/workspace/fail/*.fastq")
 
-    #assert len(pass_fastqs) <= 1
-    #assert len(fail_fastqs) <= 1
+    # pass_count = 0
+    # if len(pass_fastqs):
+    #     pass_count = wc(pass_fastqs[0])
 
-    pass_count = 0
-    if len(pass_fastqs):
-        pass_count = wc(pass_fastqs[0])
+    # fail_count = 0
+    # if len(fail_fastqs):
+    #     fail_count = wc(fail_fastqs[0])
 
-    fail_count = 0
-    if len(fail_fastqs):
-        fail_count = wc(fail_fastqs[0])
+    # print(f"Pass: {pass_count}   Fail: {fail_count}")
+    # print(f"Pass: {pass_count}   Fail: {fail_count}")
 
-    print(f"Pass: {pass_count}   Fail: {fail_count}")
-
-    if len(pass_fastqs) == 0:
-        open(out_fastq_gz, "w")
-        return
+    # # if len(pass_fastqs) == 0:
+    # #     open(out_fastq_gz, "w")
+    # #     return
     
-    assert process.returncode == 0
-    # shutil.move(pass_fastqs[0], out_fastq)
-
-
-    subprocess.check_call(f"pigz -c {' '.join(pass_fastqs)} > {out_fastq_gz}", shell=True)
+    # # assert process.returncode == 0
+    print("Output fastqs")
+    print(out_fastqs)
+    # subprocess.check_call(f"pigz -c {' '.join(pass_fastqs)} > {out_fastq_gz}", shell=True)
+    subprocess.check_call(f"pigz -c {' '.join(out_fastqs)} > {out_fastq_gz}", shell=True)
 
     shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
 
 
-def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads=1):
+def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads):
     print("extracting data to local storage...")
     fast5_dir = pull_raw_data(fast5_archive_path)
 
-    fast5_paths = glob.glob(f"{fast5_dir.name}/*/*.fast5")#[:50]
-    if len(fast5_paths) == 0:
-        fast5_paths = glob.glob(f"{fast5_dir.name}/*.fast5")#[:50]
-        
+    ## Albacore - fast5 files
+    fast5_paths = glob.glob(f"{fast5_dir.name}/*.fast5")
+ 
     print(f"performing basecalling on {len(fast5_paths)} reads...")
-    perform_basecalling(fast5_paths, out_fastq, config, threads)
+    perform_basecalling(fast5_dir.name, out_fastq, config, threads)
 
 
 

@@ -6,8 +6,8 @@ import collections
 # METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/1dmhJKHVHEnZdELOTm9jl0uevGlArZSs9zR97oRY_IcY/export?gid=908644433&format=csv"
 
 ## Testing spreadsheets
-METADATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmFLIAzCsfPjYvzQEuMr5JtulQq4grVu2tD6sc8Ur7iwaIyly8SjmdySf8zK09GvW52Ms_pfCt5iMd/pub?gid=0&single=true&output=csv"
-METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmFLIAzCsfPjYvzQEuMr5JtulQq4grVu2tD6sc8Ur7iwaIyly8SjmdySf8zK09GvW52Ms_pfCt5iMd/pub?gid=908644433&single=true&output=csv"
+METADATA_URL = "https://docs.google.com/spreadsheets/d/1Pq4WlecNGgwoVYg4gxhQP1d54otPJLzt7J_oobM8I_g/export?gid=0&format=csv"
+METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/1Pq4WlecNGgwoVYg4gxhQP1d54otPJLzt7J_oobM8I_g/export?gid=908644433&format=csv"
 
 def istrue(val):
     try:
