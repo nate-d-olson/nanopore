@@ -41,9 +41,11 @@ def _load_their_experiments():
                 continue
             cur_run = {
                 "date":row.Date,
+                "kit": row.Kit,
                 "name": row.Run,
                 "sample": row["Sample ID"],
                 "basecalled": True,
+                "platform": row["Platform"]
             }
             indices[flowcell_id]["datasets"].append(cur_run)
             
@@ -79,6 +81,7 @@ def _load_our_experiments():
                 "completed": istrue(row.Completed),
                 "sample": row["Sample ID"],
                 "basecalled": False,
+                "platform": "MinION"
             }
             indices[flowcell_id]["datasets"].append(cur_run)
             

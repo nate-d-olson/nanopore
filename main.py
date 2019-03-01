@@ -176,13 +176,27 @@ def launch_basecalling(metadata):
 
 def get_mapping_args(metadata, threads):
     args = []
-    for _,_,_,run_name in iter_runs(metadata):
+    for flowcell_id,flowcell_info,runinfo,run_name in iter_runs(metadata):
         os.makedirs(mappings_dir(run_name), exist_ok=True)
+
+        ## Read Group Args
+        guppy_config = get_guppy_config(flowcell = flowcell_info["flowcell_type"], 
+                                        kit = runinfo["kit"], 
+                                        platform = runinfo["platform"])
+
+        read_group_args = {"run":run_name,
+                            "flowcell_id":flowcell_id,
+                            "platform_model":runinfo["platform"],
+                            "sample":runinfo["sample"],
+                            "date":runinfo["date"],
+                            "guppy_config":guppy_config,
+                            "flowcell_type":flowcell_info["flowcell_type"],
+                            "flowcell_kit":runinfo["kit"]}
 
         for fastq in glob.glob(f"{fastq_dir(run_name)}/*.fastq.gz"):
             chunk_name = os.path.splitext(os.path.basename(fastq))[0]+".sorted.bam"
             outpath = f"{mappings_dir(run_name)}/{chunk_name}"
-            args.append([fastq, outpath, threads])
+            args.append([fastq, outpath, read_group_args, threads])
 
     return args
 

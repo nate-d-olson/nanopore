@@ -12,12 +12,25 @@ def run_command(command):
     subprocess.check_call(command, shell=True)
 
 
-def run_mapping(fastq, out_bam, threads=1):
+def run_mapping(fastq, out_bam, read_group_args, threads=1):
     minimap2 = "minimap2"
 
     # we specify -z because the default seems to spit out alignments that
     # are not particularly contiguous 
-    map_command = f"{minimap2} -t {threads} -a -z 600,200 -x map-ont {genome_path} {fastq} " \
+    ## TODO add run specific information
+    read_group = (
+        f"@RG\\tID:{read_group_args['run']}\\t"
+        f"PU:{read_group_args['flowcell_id']}\\t"
+        f"PL:nanopore\\t"
+        f"PM:{read_group_args['platform_model']}\\t"
+        f"LB:{read_group_args['sample']}\\t"
+        f"DT:{read_group_args['date']}\\t"
+        f"PG:guppy-v2.3.1-{read_group_args['guppy_config']}\\t"
+        f"DS:Flowcell={read_group_args['flowcell_type']},kit={read_group_args['flowcell_kit']}\\t"
+        f"SM:HG002"
+    )
+
+    map_command = f"{minimap2} -t {threads} -a -z 600,200 -x map-ont -R \'{read_group}\' {genome_path} {fastq} " \
                   f"| samtools sort -m 1G -@{threads} -O cram --reference {genome_path} > {out_bam}\n"
 
     run_command(map_command)
