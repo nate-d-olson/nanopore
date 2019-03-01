@@ -97,7 +97,24 @@ def launch_archiving(metadata):
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
 
-### Baseacalling
+### Basecalling
+def get_guppy_config(flowcell, kit, platform):
+    """
+    defines config file for use in basecalling based on flowcell type, sequencing kit, and platform
+    """
+
+    ## Promethion
+    if platform == "promethion":
+        return "dna_r9.4.1_450bps_flipflop_prom.cfg"
+    elif  flowcell == "FLO-MIN107" and kit == "SQK-RAD003":
+        return "dna_r9.5_450bps.cfg"
+    elif  flowcell == "FLO-MIN106" and kit == "SQK-RAD003":
+        return "dna_r9.4.1_450bps_flipflop.cfg"
+    elif  flowcell == "FLO-MIN106" and kit == "SQK-RAD004":
+        return "dna_r9.4.1_450bps_flipflop.cfg"
+    else:
+        print(f"Config file not defined for {kit}, {flowcell}, and {platform} combination.")
+        return "No defined config"
 
 def get_basecalling_args(metadata, threads):
     args = []
@@ -119,8 +136,13 @@ def get_basecalling_args(metadata, threads):
             outpath = f"{fastq_dir(run_name)}/{chunk_name}"
             # outdir = f"{fastq_dir(run_name)}/"
 
+            guppy_config = get_guppy_config(flowcell = flowcell_info["flowcell_type"], 
+                                            kit = runinfo["kit"], 
+                                            platform = runinfo["platform"])
+
             config = {"flowcell":flowcell_info["flowcell_type"],
-                      "kit":runinfo["kit"]}
+                      "kit":runinfo["kit"],
+                      "config":guppy_config}
 
             if not os.path.exists(outpath) or (os.path.getmtime(outpath) < os.path.getmtime(fast5_archive)):
                 args.append([fast5_archive, outpath, config, threads]) 
@@ -128,7 +150,7 @@ def get_basecalling_args(metadata, threads):
     return args
 
 def launch_basecalling(metadata):
-    threads = 8
+    threads = 16
     args = get_basecalling_args(metadata, threads)
     if len(args) == 0:
         print("No directories found for basecalling...")
@@ -145,7 +167,7 @@ def launch_basecalling(metadata):
         basecalling.run_basecalling_locally, _jobmanager(),
         job_name="basecalling", args=args, job_dir="output",
         overwrite=True, njobs=njobs, queue="msalit,owners", 
-        cpus=threads, mem=f"{8*threads}g")
+        cpus=threads, mem=f"{8+threads}g", time="4h")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 

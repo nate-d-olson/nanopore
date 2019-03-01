@@ -54,78 +54,30 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
 
     workingdir = tempfile.TemporaryDirectory()
 
-    ## Albacore command
-    # command = "read_fast5_basecaller.py \
-    #                   --flowcell {flowcell} \
-    #                   --kit {kit} \
-    #                   -o fastq -q 0 \
-    #                   -t {threads} \
-    #                   -s {outdir} \
-    #                   --basecaller.max_events=10000" # this is the default in the latest version of albacore
-
-    ## Guppy command V2.3.1
-    command = "guppy_basecaller \
-		            --input_path {fast5_path} \
-                    --save_path {outdir} \
-                    --flowcell {flowcell} \
-                    --kit {kit} \
-                    --num_callers {threads}"
-
-    command = command.format(
-        fast5_path=fast5_paths,
-        outdir=workingdir.name,
-        flowcell=config["flowcell"],
-        kit=config["kit"],
-        threads=threads)
-
     ## Guppy command V2.3.1 with flip-flop for flowcell: FLO-MIN106 and kit:SQK-RAD004
-
     command = "guppy_basecaller \
-		            --input_path {fast5_path} \
-                    --save_path {outdir} \
-                    -c dna_r9.4.1_450bps_flipflop.cfg \
-                    --num_callers {threads}"
+		        --input_path {fast5_path} \
+		        --recursive \
+                --save_path {outdir} \
+                -c {config} \
+                --num_callers {threads} \
+		        --cpu_threads_per_caller 4"
 
     command = command.format(
         fast5_path=fast5_paths,
         outdir=workingdir.name,
-        threads=threads)
-
-    ## Albacore
-    # stdin = "\n".join(fast5_paths)
-
-    
-    # process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE)
-    # process.communicate(input=stdin.encode())
+        config=config,
+        threads=threads//4)
 
     ## For guppy not using standard input to pass list of fast5s
     print("Guppy command")
     print(command)
     subprocess.run(command, shell = True)
 
-    # pass_fastqs = glob.glob(f"{workingdir.name}/workspace/pass/*.fastq")
     out_fastqs = glob.glob(f"{workingdir.name}/*.fastq")
-    fail_fastqs = glob.glob(f"{workingdir.name}/workspace/fail/*.fastq")
-
-    # pass_count = 0
-    # if len(pass_fastqs):
-    #     pass_count = wc(pass_fastqs[0])
-
-    # fail_count = 0
-    # if len(fail_fastqs):
-    #     fail_count = wc(fail_fastqs[0])
-
-    # print(f"Pass: {pass_count}   Fail: {fail_count}")
-    # print(f"Pass: {pass_count}   Fail: {fail_count}")
-
-    # # if len(pass_fastqs) == 0:
-    # #     open(out_fastq_gz, "w")
-    # #     return
     
-    # # assert process.returncode == 0
     print("Output fastqs")
     print(out_fastqs)
-    # subprocess.check_call(f"pigz -c {' '.join(pass_fastqs)} > {out_fastq_gz}", shell=True)
     subprocess.check_call(f"pigz -c {' '.join(out_fastqs)} > {out_fastq_gz}", shell=True)
 
     shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
