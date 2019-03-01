@@ -13,13 +13,9 @@ import experiments
 import fast5_archives
 import mapping
 
-# import slurm
-
 # BASE_PATH = "/oak/stanford/groups/msalit/nspies/nanopore"
 ## Path for testing
-# BASE_PATH = "/oak/stanford/groups/msalit/ndolson/nanopore-test"
 BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
-
 
 def run_dir(run_name):
     return f"{BASE_PATH}/raw/{run_name}"
@@ -124,17 +120,9 @@ def get_basecalling_args(metadata, threads):
         ## List of tar'd fast5s or multi-seq fast5s
         fast5s = glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar")
 
-        ## Code for multi-fast5 file format
-        # if len(fast5s) == 0 and glob.glob(f"{fast5_dir(run_name)}/*.fast5"):
-            # fast5s = fast5_dir(run_name)
-        
-        # fast5s = glob.glob(f"{fast5_dir(run_name)}/*.fast5") + glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar")
-
-        # for fast5_archive in glob.glob(f"{fast5_dir(run_name)}/*{run_name}_*.tar"):
         for fast5_archive in fast5s:
             chunk_name = os.path.splitext(os.path.basename(fast5_archive))[0]+".fastq.gz"
             outpath = f"{fastq_dir(run_name)}/{chunk_name}"
-            # outdir = f"{fastq_dir(run_name)}/"
 
             guppy_config = get_guppy_config(flowcell = flowcell_info["flowcell_type"], 
                                             kit = runinfo["kit"], 
@@ -159,10 +147,7 @@ def launch_basecalling(metadata):
     print(f"Running basecalling on {len(args)} fast5 files...")
     
     njobs = min(len(args), 128)
-    # if njobs < len(args):
-    #     # should use int(math.ceil(len(args)/128))) or something like that
-    #     raise Exception("NEED TO ADJUST RUN TIME accordingly")
-
+ 
     job = remote.run_remote(
         basecalling.run_basecalling_locally, _jobmanager(),
         job_name="basecalling", args=args, job_dir="output",
@@ -230,9 +215,6 @@ def launch_mapping(metadata):
         return
         
     njobs = min(len(args), 128)
-    # if njobs < len(args):
-    #     # should use int(math.ceil(len(args)/128))) or something like that
-    #     raise Exception("NEED TO ADJUST RUN TIME accordingly")
 
     job = remote.run_remote(
         mapping.run_mapping, _jobmanager(),
@@ -250,9 +232,6 @@ def launch_merge_bams(metadata):
         return
         
     njobs = min(len(args), 128)
-    # if njobs < len(args):
-    #     # should use int(math.ceil(len(args)/128))) or something like that
-    #     raise Exception("NEED TO ADJUST RUN TIME accordingly")
 
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
@@ -277,7 +256,7 @@ def filter_completed_datasets(metadata):
     
 def main():
     metadata = experiments.load_experiment_metadata()
-    print(metadata)
+
     if len(sys.argv) == 2:
         flow_cell_id = sys.argv[1]
         metadata = {flow_cell_id: metadata[flow_cell_id]}
@@ -290,24 +269,17 @@ def main():
             print("...skipping.")
             print("-"*50)
 
-    # pprint.pprint(metadata)
-
-    # if not basecalling.is_albacore_installed():
-    #     print("[ERROR] ONT basecalling script read_fast5_basecaller.py (albacore) must \n"
-    #           "[ERROR] be installed and accessible from the current environment.")
-    #     sys.exit(1)
-
-    # print("Archiving...")
-    # launch_archiving(metadata)
+    print("Archiving...")
+    launch_archiving(metadata)
 
     print("Basecalling...")
     launch_basecalling(metadata)
 
-    # print("Mapping...")
-    # launch_mapping(metadata)
+    print("Mapping...")
+    launch_mapping(metadata)
 
-    # print("Merging bams...")
-    # launch_merge_bams(metadata)
+    print("Merging bams...")
+    launch_merge_bams(metadata)
 
 
 if __name__ == '__main__':

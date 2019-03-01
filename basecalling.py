@@ -38,9 +38,6 @@ def pull_raw_data(fast5_archive_path):
     ## Check if archived fast5s or directory of fast5s
     fast5_archive = tarfile.TarFile(fast5_archive_path)
 
-    # if we need the subdirectory name, probably unnecessary
-    # base = fast5_archive.members[0].name
-
     fast5_archive.extractall(path=temp_dir.name)
         
     return temp_dir
@@ -70,14 +67,10 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
         threads=threads//4)
 
     ## For guppy not using standard input to pass list of fast5s
-    print("Guppy command")
-    print(command)
     subprocess.run(command, shell = True)
 
     out_fastqs = glob.glob(f"{workingdir.name}/*.fastq")
     
-    print("Output fastqs")
-    print(out_fastqs)
     subprocess.check_call(f"pigz -c {' '.join(out_fastqs)} > {out_fastq_gz}", shell=True)
 
     shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
@@ -92,25 +85,6 @@ def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads):
  
     print(f"performing basecalling on {len(fast5_paths)} reads...")
     perform_basecalling(fast5_dir.name, out_fastq, config, threads)
-
-
-
-# def test():
-#     print("extracting data to local storage")
-#     fast5_archive = "/oak/stanford/groups/msalit/nspies/nanopore/raw/20170927_1910_HG002_ultralong_plug_filter/fast5/20170927_1910_HG002_ultralong_plug_filter_0.tar"
-#     fast5_dir = pull_raw_data(fast5_archive)
-
-#     print(fast5_dir)
-
-#     fast5_paths = glob.glob(f"{fast5_dir}/*/*.fast5")[:10]
-#     out_fastq = "asdf.fastq"
-
-#     configuration = {"flowcell":"FLO-MIN106",
-#                      "kit":"SQK-RAD003",
-#                      "threads":1}
-
-#     print(f"performing basecalling on {len(fast5_paths)} reads...")
-#     perform_basecalling(fast5_paths, out_fastq, configuration)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ def load_experiment_metadata():
     
 def _load_their_experiments():
     df = pandas.read_csv(METADATA_URL_NOTT, parse_dates=["Date"])
-    # print(df)
+
     indices = collections.defaultdict(dict)
     for flowcell_id, group in df.groupby("Flowcell ID"):
         assert len(group["Type"].unique()) == 1
@@ -56,7 +56,6 @@ def _load_their_experiments():
     indices = collections.OrderedDict((k,indices[k]) for k in 
                                       sorted(indices, reverse=True,
                                              key=lambda x: max(d["date"] for d in indices[x]["datasets"])))
-    # pprint.pprint(indices)
 
     return indices
 
@@ -92,7 +91,6 @@ def _load_our_experiments():
     indices = collections.OrderedDict((k,indices[k]) for k in 
                                       sorted(indices, reverse=True,
                                              key=lambda x: max(d["date"] for d in indices[x]["datasets"])))
-    # pprint.pprint(indices)
 
     return indices
 
