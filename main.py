@@ -17,7 +17,8 @@ import mapping
 
 # BASE_PATH = "/oak/stanford/groups/msalit/nspies/nanopore"
 ## Path for testing
-BASE_PATH = "/oak/stanford/groups/msalit/ndolson/nanopore-test"
+# BASE_PATH = "/oak/stanford/groups/msalit/ndolson/nanopore-test"
+BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
 
 
 def run_dir(run_name):
