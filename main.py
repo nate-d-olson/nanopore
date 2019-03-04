@@ -269,6 +269,11 @@ def main():
             print("...skipping.")
             print("-"*50)
 
+    if not basecalling.is_guppy_installed():
+        print("[ERROR] ONT basecallier Guppy) must \n"
+              "[ERROR] be installed and accessible from the current environment.")
+        sys.exit(1)
+
     print("Archiving...")
     launch_archiving(metadata)
 

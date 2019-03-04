@@ -18,7 +18,7 @@ def wc(path):
         count += 1
     return count
 
-def is_albacore_installed():
+def is_guppy_installed():
     try:
         print("Checking albacore (ONT basecaller) is installed and can be run...")
         subprocess.check_call("read_fast5_basecaller.py -v", shell=True)
