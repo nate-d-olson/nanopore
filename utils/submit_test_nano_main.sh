@@ -24,10 +24,8 @@ source nanopore_env/bin/activate
 
 ## Creating run directory
 JOBID=$(sacct -n -X -s r --format jobid --name ONT-test | sed 's/ //g')
-DATE=$(date +"%Y-%m-%d_%H-%M-%S")
-RUNDIR=ONT-pipe-run_JOBID_${JOBID}_${DATE}
-mkdir ${RUNDIR}
-cd ${RUNDIR}
+mkdir -p ONT-pipe-run-logs/${JOBID}
+cd ONT-pipe-run-logs/${JOBID}
 
 
 ## running running pipeline 
