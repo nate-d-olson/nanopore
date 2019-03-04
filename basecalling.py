@@ -73,7 +73,23 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
     
     subprocess.check_call(f"pigz -c {' '.join(out_fastqs)} > {out_fastq_gz}", shell=True)
 
-    shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") # to test
+    ## Seq summary 
+    shutil.move(f"{workingdir.name}/sequencing_summary.txt", f"{out_fastq_gz}.sequencing_summary.txt") 
+    
+    ## Basecalling log file
+    guppy_log=glob.glob(f"{workingdir.name}/*.log")
+    if len(guppy_log) == 1:
+        shutil.move(guppy_log[0], f"{out_fastq_gz}.guppy_basecaller_log.log") 
+    elif len(guppy_log) > 1:
+        print("More than one guppy basecalling log file - concatenating")
+        print(guppy_log)
+        with open(f"{out_fastq_gz}.guppy_basecaller_log.log", 'w') as outfile:
+            for fname in guppy_log:
+                with open(fname) as infile:
+                    for line in infile:
+                        outfile.write(line)
+    else:
+        print("no basecalling log files found")
 
 
 def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads):
