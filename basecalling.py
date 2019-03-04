@@ -91,6 +91,8 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
     else:
         print("no basecalling log files found")
 
+    ## Guppy telemetry file
+    shutil.move(f"{workingdir.name}/sequencing_telemetry.js", f"{out_fastq_gz}.sequencing_telemetry.js") 
 
 def run_basecalling_locally(fast5_archive_path, out_fastq, config, threads):
     print("extracting data to local storage...")
