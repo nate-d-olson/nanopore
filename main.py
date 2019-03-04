@@ -147,10 +147,13 @@ def launch_basecalling(metadata):
     print(f"Running basecalling on {len(args)} fast5 files...")
     
     njobs = min(len(args), 128)
- 
+    
+    if njobs > len(args):
+        print("MESSAGE: Number of tar balls > 128. Only processing first 128. Rerun pipeline to process next batch of tars.")
+
     job = remote.run_remote(
         basecalling.run_basecalling_locally, _jobmanager(),
-        job_name="basecalling", args=args, job_dir="output",
+        job_name="basecalling", args=args[0:njobs-1], job_dir="output",
         overwrite=True, njobs=njobs, queue="msalit,owners", 
         cpus=threads, mem=f"{8+threads}g", time="4h")
 
@@ -218,7 +221,7 @@ def launch_mapping(metadata):
 
     job = remote.run_remote(
         mapping.run_mapping, _jobmanager(),
-        job_name="mapping", args=args, job_dir="output",
+        job_name="mapping", args=args[0:njobs-1], job_dir="output",
         overwrite=True, njobs=njobs, queue="owners", mem="48g", cpus=threads)
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
@@ -235,7 +238,7 @@ def launch_merge_bams(metadata):
 
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
-        job_name="merge_bams", args=args, job_dir="output",
+        job_name="merge_bams", args=args[0:njobs-1], job_dir="output",
         overwrite=True, njobs=njobs, queue="owners", cpus=4, mem="24g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
