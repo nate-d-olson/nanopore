@@ -20,8 +20,8 @@ def wc(path):
 
 def is_guppy_installed():
     try:
-        print("Checking albacore (ONT basecaller) is installed and can be run...")
-        subprocess.check_call("read_fast5_basecaller.py -v", shell=True)
+        print("Checking guppy (ONT basecaller) is installed and can be run...")
+        subprocess.check_call("guppy_basecaller -v", shell=True)
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
@@ -63,7 +63,7 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
     command = command.format(
         fast5_path=fast5_paths,
         outdir=workingdir.name,
-        config=config,
+        config=config["config"],
         threads=threads//4)
 
     ## For guppy not using standard input to pass list of fast5s
