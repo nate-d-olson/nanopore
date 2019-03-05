@@ -238,7 +238,7 @@ def launch_merge_bams(metadata):
 
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
-        job_name="merge_bams", args=args[0:njobs-1], job_dir="output",
+        job_name="merge_bams", args=args, job_dir="output",
         overwrite=True, njobs=njobs, queue="owners", cpus=4, mem="24g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
