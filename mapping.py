@@ -29,8 +29,8 @@ def run_mapping(fastq, out_bam, read_group_args, threads=1):
 
     # we specify -z because the default seems to spit out alignments that
     # are not particularly contiguous 
-    map_command = f"{minimap2} -t {threads} -a -z 600,200 -x map-ont -R \'{read_group}\' {genome_path} {fastq} " \
-                  f"| samtools sort -m 1G -@{threads} -O cram --reference {genome_path} > {out_bam}\n"
+    map_command = f"{minimap2} -t {threads} -aL -z 600,200 -x map-ont -R \'{read_group}\' {genome_path} {fastq} " \
+                  f"| samtools sort -m 1G -@{threads} -O bam --reference {genome_path} > {out_bam}\n"
 
     run_command(map_command)
 
@@ -43,7 +43,7 @@ def merge_bams(combined_path, bams):
     # merge_command = f"samtools merge -f -O cram --reference {genome_path} {combined_path} {' '.join(bams)}"
     # run_command(merge_command)
 
-    merge_command = f"samtools cat {' '.join(bams)} | samtools sort -@4 -m 2G -O cram --reference {genome_path} -o {combined_path}"
+    merge_command = f"samtools cat {' '.join(bams)} | samtools sort -@4 -m 2G -O bam --reference {genome_path} -o {combined_path}"
     run_command(merge_command)
     
     run_command(f"samtools index {combined_path}")
