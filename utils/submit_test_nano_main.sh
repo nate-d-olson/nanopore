@@ -31,5 +31,10 @@ cd ONT-pipe-run-logs/${JOBID}
 ## running running pipeline 
 python ${BASEPATH}/msalit/ndolson/nanopore-pipeline/main.py $1
 
+## generate qc notebook
+cd ${BASEPATH}/msalit/ndolson/nanopore-pipeline
+DATE=$(date '+%F')
+bash run_qc_notebook.sh ${BASEPATH}/msalit/ndolson/ONT-pipe-run-logs/${JOBID}/qc_${DATE}
+
 ## deactivating env
 deactivate
