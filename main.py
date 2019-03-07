@@ -283,8 +283,8 @@ def main():
     print("Basecalling...")
     launch_basecalling(metadata)
 
-    print("Mapping...")
-    launch_mapping(metadata)
+#    print("Mapping...")
+#    launch_mapping(metadata)
 
 #    print("Merging bams...")
 #    launch_merge_bams(metadata)
