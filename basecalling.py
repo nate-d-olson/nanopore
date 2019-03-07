@@ -66,6 +66,8 @@ def perform_basecalling(fast5_paths, out_fastq_gz, config, threads):
         config=config["config"],
         threads=threads//4)
 
+    print(f"Basecalling: {fast5_paths}")
+
     ## For guppy not using standard input to pass list of fast5s
     subprocess.run(command, shell = True)
 
