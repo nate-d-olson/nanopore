@@ -23,7 +23,7 @@ cd ${BASEPATH}/msalit/ndolson
 source nanopore_env/bin/activate
 
 ## Creating run directory
-JOBID=$(sacct -n -X -s r --format jobid --name ONT-test | sed 's/ //g')
+JOBID=$(sacct -n -X -s r --format jobid --name ONT | sed 's/ //g')
 mkdir -p ONT-pipe-run-logs/${JOBID}
 cd ONT-pipe-run-logs/${JOBID}
 
