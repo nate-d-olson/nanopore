@@ -13,7 +13,7 @@ import experiments
 import fast5_archives
 import mapping
 
-# BASE_PATH = "/oak/stanford/groups/msalit/nspies/nanopore"
+BASE_PATH = "/scratch/groups/msalit/nanopore"
 ## Path for testing
 BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
 
@@ -146,15 +146,15 @@ def launch_basecalling(metadata):
 
     print(f"Running basecalling on {len(args)} fast5 files...")
     
-    njobs = min(len(args), 128)
+    njobs = min(len(args), 500)
     
     if njobs > len(args):
-        print("MESSAGE: Number of tar balls > 128. Only processing first 128. Rerun pipeline to process next batch of tars.")
+        print("MESSAGE: Number of tar balls > 500. Only processing first 500. Rerun pipeline to process next batch of tars.")
 
     job = remote.run_remote(
         basecalling.run_basecalling_locally, _jobmanager(),
-        job_name="basecalling", args=args[0:njobs-1], job_dir="output",
-        overwrite=True, njobs=njobs, queue="msalit,owners", 
+        job_name="basecalling", args=args[0:njobs], job_dir="output",
+        overwrite=True, njobs=njobs, queue="msalit,owners,normal", 
         cpus=threads, mem=f"{8+threads}g", time="4h")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
@@ -217,12 +217,12 @@ def launch_mapping(metadata):
         print("No fastq files found for mapping...")
         return
         
-    njobs = min(len(args), 128)
+    njobs = min(len(args), 500)
 
     job = remote.run_remote(
         mapping.run_mapping, _jobmanager(),
-        job_name="mapping", args=args[0:njobs-1], job_dir="output",
-        overwrite=True, njobs=njobs, queue="owners", mem="48g", cpus=threads)
+        job_name="mapping", args=args[0:njobs], job_dir="output",
+        overwrite=True, njobs=njobs, queue="owners,msalit,normal", mem="48g", cpus=threads)
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
@@ -239,7 +239,7 @@ def launch_merge_bams(metadata):
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
         job_name="merge_bams", args=args, job_dir="output",
-        overwrite=True, njobs=njobs, queue="owners", cpus=4, mem="24g")
+        overwrite=True, njobs=njobs, queue="owners,msalit,normal", cpus=4, mem="24g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
@@ -286,8 +286,8 @@ def main():
     print("Mapping...")
     launch_mapping(metadata)
 
-    print("Merging bams...")
-    launch_merge_bams(metadata)
+#    print("Merging bams...")
+#    launch_merge_bams(metadata)
 
 
 if __name__ == '__main__':
