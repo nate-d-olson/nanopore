@@ -37,11 +37,11 @@ def run_mapping(fastq, out_bam, read_group_args, genome_path, threads=1):
 
     ## BAM file sanity checks ####################
     ## Checking file - mapping stats and for incomplete file
-    idxstat_command = f"samtools idxstat {out_bam}"
-    run_command(idxstat_command)
+    idxstats_command = f"samtools idxstats {out_bam}"
+    run_command(idxstats_command)
 
     ## Checking header format
-    header_command = f"samtools view -h {out_bam}"
+    header_command = f"samtools view -H {out_bam}"
     run_command(header_command) 
 
 
