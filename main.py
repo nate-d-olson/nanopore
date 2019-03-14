@@ -166,7 +166,7 @@ def get_genome_path(ref_name):
         return "/oak/stanford/groups/msalit/shared/genomes/hg19/hs37d5.fa"
     elif ref_name == "GRCh38":
         return "/oak/stanford/groups/msalit/shared/genomes/hg38/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna"
-    else
+    else:
         print("Invalid ref_name")
         return ""
 
@@ -261,7 +261,7 @@ def filter_completed_datasets(metadata):
     completed = []
 
     for name, info in metadata.items():
-        if basecalling_complete({name:info}) and mapping_complete({name:info}, ref_name):
+        if basecalling_complete({name:info}) and mapping_complete({name:info}, "hs37d5") and mapping_complete({name:info}, "GRCh38"):
             completed.append(name)
         else:
             to_run[name] = info
