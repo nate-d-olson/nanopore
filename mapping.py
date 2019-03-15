@@ -1,9 +1,6 @@
 import subprocess
 import sys
 
-genome_path = "/oak/stanford/groups/msalit/shared/genomes/hg38/" \
-              "GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna"
-
 
 def run_command(command):
     sys.stderr.write(f"Running command '{command}'...")
@@ -12,7 +9,7 @@ def run_command(command):
     subprocess.check_call(command, shell=True)
 
 
-def run_mapping(fastq, out_bam, read_group_args, threads=1):
+def run_mapping(fastq, out_bam, read_group_args, genome_path, threads=1):
     minimap2 = "minimap2"
 
     read_group = (
@@ -38,8 +35,17 @@ def run_mapping(fastq, out_bam, read_group_args, threads=1):
     index_command = f"samtools index {out_bam}"
     run_command(index_command)
 
+    ## BAM file sanity checks ####################
+    ## Checking file - mapping stats and for incomplete file
+    idxstats_command = f"samtools idxstats {out_bam}"
+    run_command(idxstats_command)
 
-def merge_bams(combined_path, bams):
+    ## Checking header format
+    header_command = f"samtools view -H {out_bam}"
+    run_command(header_command) 
+
+
+def merge_bams(combined_path, bams, genome_path):
     # merge_command = f"samtools merge -f -O cram --reference {genome_path} {combined_path} {' '.join(bams)}"
     # run_command(merge_command)
 

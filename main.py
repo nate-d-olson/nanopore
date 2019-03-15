@@ -13,7 +13,7 @@ import experiments
 import fast5_archives
 import mapping
 
-BASE_PATH = "/scratch/groups/msalit/nanopore"
+# BASE_PATH = "/scratch/groups/msalit/nanopore"
 ## Path for testing
 # BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
 
@@ -26,11 +26,11 @@ def fast5_dir(run_name):
 def fastq_dir(run_name):
     return f"{run_dir(run_name)}/fastq"
 
-def mappings_dir(run_name):
-    return f"{run_dir(run_name)}/aln"
+def mappings_dir(run_name, ref_name):
+    return f"{run_dir(run_name)}/aln_{ref_name}"
 
-def combined_bam(run_name):
-    return f"{mappings_dir(run_name)}/{run_name}.combined.sorted.bam"
+def combined_bam(run_name, ref_name):
+    return f"{mappings_dir(run_name, ref_name)}/{run_name}.combined.sorted.bam"
 
 
 def _jobmanager():
@@ -50,10 +50,10 @@ def basecalling_complete(metadata):
             return False
     return True
 
-def mapping_complete(metadata):
+def mapping_complete(metadata, ref_name):
     for _,_,_,run_name in iter_runs(metadata):
-        if not os.path.exists(combined_bam(run_name)):
-            print("Not found:", combined_bam(run_name))
+        if not os.path.exists(combined_bam(run_name, ref_name)):
+            print("Not found:", combined_bam(run_name, ref_name))
             return False
     return True
 
@@ -161,12 +161,23 @@ def launch_basecalling(metadata):
 
 
 ### Mapping
+def get_genome_path(ref_name):
+    if ref_name == "hs37d5":
+        return "/oak/stanford/groups/msalit/shared/genomes/hg19/hs37d5.fa"
+    elif ref_name == "GRCh38":
+        return "/oak/stanford/groups/msalit/shared/genomes/hg38/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna"
+    else:
+        print("Invalid ref_name")
+        return ""
 
-def get_mapping_args(metadata, threads):
+def get_mapping_args(metadata, ref_name, threads):
     args = []
+    
+    genome_path = get_genome_path(ref_name)
+    
     for flowcell_id,flowcell_info,runinfo,run_name in iter_runs(metadata):
-        os.makedirs(mappings_dir(run_name), exist_ok=True)
-
+        os.makedirs(mappings_dir(run_name, ref_name), exist_ok=True)
+        
         ## Read Group Args
         guppy_config = get_guppy_config(flowcell = flowcell_info["flowcell_type"], 
                                         kit = runinfo["kit"], 
@@ -183,24 +194,24 @@ def get_mapping_args(metadata, threads):
 
         for fastq in glob.glob(f"{fastq_dir(run_name)}/*.fastq.gz"):
             chunk_name = os.path.splitext(os.path.basename(fastq))[0]+".sorted.bam"
-            outpath = f"{mappings_dir(run_name)}/{chunk_name}"
-            args.append([fastq, outpath, read_group_args, threads])
+            outpath = f"{mappings_dir(run_name, ref_name)}/{chunk_name}"
+            args.append([fastq, outpath, read_group_args, genome_path, threads])
 
     return args
 
-def _get_merge_bams_args(run_name):
+def _get_merge_bams_args(run_name, ref_name):
     bams = []
-    for bam in glob.glob(f"{mappings_dir(run_name)}/*.sorted.bam"):
+    for bam in glob.glob(f"{mappings_dir(run_name, ref_name)}/*.sorted.bam"):
         if bam.endswith("combined.sorted.bam"): continue
 
         bams.append(bam)
 
-    return [combined_bam(run_name), bams]
+    return [combined_bam(run_name, ref_name), bams]
 
-def get_merge_bams_args(metadata):
+def get_merge_bams_args(metadata, ref_name):
     args = []
     for _,_,_,run_name in iter_runs(metadata):
-        cur_args = _get_merge_bams_args(run_name)
+        cur_args = _get_merge_bams_args(run_name, ref_name)
         if len(cur_args[1]) == 0:
             print(f"No bams to merge {run_name}")
             continue
@@ -208,9 +219,9 @@ def get_merge_bams_args(metadata):
 
     return args
 
-def launch_mapping(metadata):
+def launch_mapping(metadata, ref_name):
     threads = 4
-    args = get_mapping_args(metadata, threads)
+    args = get_mapping_args(metadata, ref_name, threads)
     print(f"Aligning {len(args)} fastq files...")
     
     if len(args) == 0:
@@ -227,8 +238,8 @@ def launch_mapping(metadata):
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
 
-def launch_merge_bams(metadata):
-    args = get_merge_bams_args(metadata)
+def launch_merge_bams(metadata, ref_name):
+    args = get_merge_bams_args(metadata, ref_name)
 
     if len(args) == 0:
         print("No bam files found to merge...")
@@ -250,7 +261,7 @@ def filter_completed_datasets(metadata):
     completed = []
 
     for name, info in metadata.items():
-        if basecalling_complete({name:info}) and mapping_complete({name:info}):
+        if basecalling_complete({name:info}) and mapping_complete({name:info}, "hs37d5") and mapping_complete({name:info}, "GRCh38"):
             completed.append(name)
         else:
             to_run[name] = info
@@ -283,12 +294,17 @@ def main():
     print("Basecalling...")
     launch_basecalling(metadata)
 
-#    print("Mapping...")
-#    launch_mapping(metadata)
+    print("Mapping hs37d5...")
+    launch_mapping(metadata, ref_name = "hs37d5")
 
-#    print("Merging bams...")
-#    launch_merge_bams(metadata)
+    print("Mapping GRCh38...")
+    launch_mapping(metadata, ref_name = "GRCh38")
 
+    print("Merging hs37d5 bams...")
+    launch_merge_bams(metadata, ref_name = "hs37d5")
+
+    print("Merging GRCh38 bams...")
+    launch_merge_bams(metadata, ref_name = "GRCh38")
 
 if __name__ == '__main__':
     main()

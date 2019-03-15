@@ -5,7 +5,6 @@ set -o pipefail
 combine_fast5s () {
     args=""
     subdirs=`find ${input_dir} -maxdepth 1 -type d`
-    # subdirs=`find ${input_dir} -maxdepth 1 -type d -printf "%T@ %f\n" | sort | cut -d' ' -f2`
     total_size=0
     chunk=1
     for run_dir in ${subdirs}; do
@@ -56,10 +55,6 @@ cat_fastqs () {
         ((count++))
         echo "${count} - ${fastq_dir}"
         cat ${fastq_dir}/*.fastq.gz >> ${fastq}
-
-        # if (( count > 1 )); then
-        #     break
-        # fi
     done
 }
 
@@ -74,23 +69,52 @@ validate_combined_fastq () {
     echo "Collected ${read_count} reads"
 }
 
-map_reads () {
-    declare -A assemblies=( ["hs37d5"]="/oak/stanford/groups/msalit/shared/genomes/hg19/hs37d5.fa"
-        ["hg38"]="/oak/stanford/groups/msalit/shared/genomes/hg38/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna" )
+cat_summary_seq(){
+    echo "Concatenating seq summary files..."
+    fastq_dirs=`find /oak/stanford/groups/msalit/nspies/nanopore/raw -maxdepth 2 -name "fastq"`
 
-    for assembly in "${!assemblies[@]}"; do
-        echo "Mapping against ${assembly} - ${assemblies[$assembly]}"
-        genome_path=${assemblies[$assembly]}
-        out_cram=${output}.${assembly}.sorted.cram
+    if [ -e ${sequence_summary} ]; then
+        rm ${sequence_summary}
+    fi
 
-        minimap2 -t ${threads} -a -z 600,200 -x map-ont ${genome_path} ${fastq}  \
-           | samtools sort -m 1G -@${threads} -O cram --reference ${genome_path} > ${out_cram}
-        samtools index ${out_cram}
-
-        echo "Performing QC..."
-        python3 quick_qc.py ${out_cram} ${output}.${assembly}.qc.pdf | tee ${output}.${assembly}.qc.txt
-    done
+    count=0
+    for fastq_dir in ${fastq_dirs}; do
+        ((count++))
+        echo "${count} - ${fastq_dir}"
+        cat ${fastq_dir}/*.sequence_summary.txt >> ${sequence_summary}
+    done   
 }
+
+cat_bams(){
+    ## Combine BAMs hs37d5
+    echo "Concatenating combined bams for hs37d5..."
+    ls ${input_dir}/*/aln_hs37d5/*combined.sorted.bam | \
+        samtools cat | \
+        samtools sort -@4 -m 2G -O bam \
+        --reference ${hs37d5_ref} \
+        -o ${bam37}
+
+    echo "Performing hs37d5 QC..."
+    python3 quick_qc.py ${bam37} ${output}.hs37d5.qc.pdf | tee ${output}.hs37d5.qc.txt
+
+    ## Combine BAMs GRCh38
+    echo "Concatenating combined bams for GRCh38..."
+    ls ${input_dir}/*/aln_GRCh38/*combined.sorted.bam | \
+        samtools cat | \
+        samtools sort -@4 -m 2G -O bam \
+        --reference ${grch38_ref} \
+        -o ${bam38}
+    
+    samtools index ${bam38}
+
+    echo "Performing GRCh38 QC..."
+    python3 quick_qc.py ${bam38} ${output}.GRCh38.qc.pdf | tee ${output}.GRCh38.qc.txt
+}
+
+validate_combined_bams(){
+
+}
+
 
 if ! python3 -c "import numpy,tqdm"; then
     echo "Error: Need to run python >=3 with numpy installed"
@@ -111,13 +135,27 @@ if [ "${output:0:1}" = "/" ]; then
     exit
 fi
 
-input_dir=/oak/stanford/groups/msalit/nspies/nanopore/raw
-output_dir=/oak/stanford/groups/msalit/nspies/nanopore/release/${output}
+input_dir=/scratch/groups/msalit/nanopore/nanopore-test/raw
+output_dir=/scratch/groups/msalit/nanopore/nanopore-test/release/${output}
 mkdir -p ${output_dir}
 output=$output_dir/$output
-fastq=${output}.fastq.gz
 
+## FAST5s
 combine_fast5s
+
+## FASTQs
+fastq=${output}.fastq.gz
+sequence_summary=${output}.sequence_summary.txt
+
 cat_fastqs
 validate_combined_fastq
-map_reads
+
+## BAM files
+hs37d5_ref=/oak/stanford/groups/msalit/shared/genomes/hg19/hs37d5.fa
+grch38_ref=/oak/stanford/groups/msalit/shared/genomes/hg38/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna
+bam37=${output}_hs37d5.bam
+bam38=${output}_GRCh38.bam
+
+cat_bams
+validate_combined_bams
+
