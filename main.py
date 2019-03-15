@@ -300,9 +300,11 @@ def main():
     print("Mapping GRCh38...")
     launch_mapping(metadata, ref_name = "GRCh38")
 
-#    print("Merging bams...")
-#    launch_merge_bams(metadata)
+    print("Merging hs37d5 bams...")
+    launch_merge_bams(metadata, ref_name = "hs37d5")
 
+    print("Merging GRCh38 bams...")
+    launch_merge_bams(metadata, ref_name = "GRCh38")
 
 if __name__ == '__main__':
     main()
