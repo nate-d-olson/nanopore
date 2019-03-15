@@ -2,12 +2,12 @@ import numpy
 import pandas
 import collections
 
-# METADATA_URL = "https://docs.google.com/spreadsheets/d/1dmhJKHVHEnZdELOTm9jl0uevGlArZSs9zR97oRY_IcY/export?gid=0&format=csv"
-# METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/1dmhJKHVHEnZdELOTm9jl0uevGlArZSs9zR97oRY_IcY/export?gid=908644433&format=csv"
+METADATA_URL = "https://docs.google.com/spreadsheets/d/1dmhJKHVHEnZdELOTm9jl0uevGlArZSs9zR97oRY_IcY/export?gid=0&format=csv"
+METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/1dmhJKHVHEnZdELOTm9jl0uevGlArZSs9zR97oRY_IcY/export?gid=908644433&format=csv"
 
 ## Testing spreadsheets
-METADATA_URL = "https://docs.google.com/spreadsheets/d/1Pq4WlecNGgwoVYg4gxhQP1d54otPJLzt7J_oobM8I_g/export?gid=0&format=csv"
-METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/1Pq4WlecNGgwoVYg4gxhQP1d54otPJLzt7J_oobM8I_g/export?gid=908644433&format=csv"
+# METADATA_URL = "https://docs.google.com/spreadsheets/d/1Pq4WlecNGgwoVYg4gxhQP1d54otPJLzt7J_oobM8I_g/export?gid=0&format=csv"
+# METADATA_URL_NOTT = "https://docs.google.com/spreadsheets/d/1Pq4WlecNGgwoVYg4gxhQP1d54otPJLzt7J_oobM8I_g/export?gid=908644433&format=csv"
 
 def istrue(val):
     try:

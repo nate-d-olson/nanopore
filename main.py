@@ -15,7 +15,7 @@ import mapping
 
 # BASE_PATH = "/scratch/groups/msalit/nanopore"
 ## Path for testing
-BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
+# BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
 
 def run_dir(run_name):
     return f"{BASE_PATH}/raw/{run_name}"
@@ -288,8 +288,8 @@ def main():
               "[ERROR] be installed and accessible from the current environment.")
         sys.exit(1)
 
-    print("Archiving...")
-    launch_archiving(metadata)
+#    print("Archiving...")
+#    launch_archiving(metadata)
 
     print("Basecalling...")
     launch_basecalling(metadata)
