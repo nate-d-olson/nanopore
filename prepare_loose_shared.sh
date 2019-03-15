@@ -6,17 +6,28 @@ GETINFO=/oak/stanford/groups/msalit/ndolson/nanopore-pipeline/utils/get_flowcell
 echo "Decompressing tar"
 
 input_tar=$1
-tar -xf ${input_tar} 
+# tar -xf ${input_tar} 
 
 echo "Getting flowcell info"
 run_name=$2
-fast5_file=$(ls ${run_name}/*/reads/0/*fast5 | head -1)
+fast5_file=$(find ${run_name}/ -name *fast5 -print -quit)
 python ${GETINFO} ${fast5_file}
 
 ## Compress Read directories
-cd ${run_name}/reads/*/
-for dir in ${run_name}/reads/*/
+mkdir fast5
+cd ${run_name}/*/reads/
+for dir in */;
 do
     dir=${dir%*/}      # remove the trailing "/"
-    tar -cf -a ../../fast5/${run_name}_${dir}.tar
+    echo ${dir}
+    ls ${dir} > fast5_list.txt
+    split -l 1000 -d --additional-suffix=_fast5.lst fast5_list.txt ${run_name}_${dir}_
+    for lst in *.lst;
+    do
+        echo ${lst}
+        out_tar=${lst%_fast5.lst}.tar ## replace _fast5.txt with tar
+        cd ${dir}
+        tar -cf ../../../../fast5/${out_tar} -T ../${lst}
+        cd ../
+    done
 done
