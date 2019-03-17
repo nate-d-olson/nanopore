@@ -13,7 +13,7 @@ import experiments
 import fast5_archives
 import mapping
 
-# BASE_PATH = "/scratch/groups/msalit/nanopore"
+BASE_PATH = "/scratch/groups/msalit/nanopore"
 ## Path for testing
 # BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
 
