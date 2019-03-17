@@ -2,8 +2,8 @@
 #SBATCH -n 4 # number of cores
 #SBATCH --mem 12g # memory pool for all cores
 #SBATCH --job-name=ONT
-#SBATCH --time=5-10:00:00
-#SBATCH --partition=msalit
+#SBATCH --time=1-00:00:00
+#SBATCH --partition=msalit,normal
 #SBATCH --mail-type=ALL
 
 BASEPATH=/oak/stanford/groups
