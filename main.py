@@ -13,7 +13,7 @@ import experiments
 import fast5_archives
 import mapping
 
-# BASE_PATH = "/scratch/groups/msalit/nanopore"
+BASE_PATH = "/scratch/groups/msalit/nanopore"
 ## Path for testing
 # BASE_PATH = "/scratch/groups/msalit/nanopore/nanopore-test"
 
@@ -146,16 +146,16 @@ def launch_basecalling(metadata):
 
     print(f"Running basecalling on {len(args)} fast5 files...")
     
-    njobs = min(len(args), 500)
+    njobs = min(len(args), 1000)
     
     if njobs > len(args):
-        print("MESSAGE: Number of tar balls > 500. Only processing first 500. Rerun pipeline to process next batch of tars.")
+        print("MESSAGE: Number of tar balls > 1000. Only processing first 1000. Rerun pipeline to process next batch of tars.")
 
     job = remote.run_remote(
         basecalling.run_basecalling_locally, _jobmanager(),
         job_name="basecalling", args=args[0:njobs], job_dir="output",
         overwrite=True, njobs=njobs, queue="msalit,owners,normal", 
-        cpus=threads, mem=f"{8+threads}g", time="4h")
+        cpus=threads, mem=f"{8+threads}g", time="8h")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
 
@@ -200,13 +200,15 @@ def get_mapping_args(metadata, ref_name, threads):
     return args
 
 def _get_merge_bams_args(run_name, ref_name):
+    genome_path = get_genome_path(ref_name)
+
     bams = []
     for bam in glob.glob(f"{mappings_dir(run_name, ref_name)}/*.sorted.bam"):
         if bam.endswith("combined.sorted.bam"): continue
 
         bams.append(bam)
 
-    return [combined_bam(run_name, ref_name), bams]
+    return [combined_bam(run_name, ref_name), bams, genome_path]
 
 def get_merge_bams_args(metadata, ref_name):
     args = []
@@ -228,11 +230,11 @@ def launch_mapping(metadata, ref_name):
         print("No fastq files found for mapping...")
         return
         
-    njobs = min(len(args), 500)
+    njobs = min(len(args), 1000)
 
     job = remote.run_remote(
         mapping.run_mapping, _jobmanager(),
-        job_name="mapping", args=args[0:njobs], job_dir="output",
+        job_name=f"mapping-{ref_name}", args=args[0:njobs], job_dir="output",
         overwrite=True, njobs=njobs, queue="owners,msalit,normal", mem="48g", cpus=threads)
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
@@ -245,7 +247,7 @@ def launch_merge_bams(metadata, ref_name):
         print("No bam files found to merge...")
         return
         
-    njobs = min(len(args), 128)
+    njobs = min(len(args), 1000)
 
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
