@@ -101,12 +101,16 @@ def get_guppy_config(flowcell, kit, platform):
 
     ## Promethion
     if platform == "promethion":
-        return "dna_r9.4.1_450bps_flipflop_prom.cfg"
+        return "dna_r9.4.1_450bps_flipflop.cfg"
     elif  flowcell == "FLO-MIN107" and kit == "SQK-RAD003":
         return "dna_r9.5_450bps.cfg"
     elif  flowcell == "FLO-MIN106" and kit == "SQK-RAD003":
         return "dna_r9.4.1_450bps_flipflop.cfg"
     elif  flowcell == "FLO-MIN106" and kit == "SQK-RAD004":
+        return "dna_r9.4.1_450bps_flipflop.cfg"
+    elif  flowcell == "FLO-MIN106" and kit == "SQK-RBK001":
+        return "dna_r9.4.1_450bps_flipflop.cfg"
+    elif  flowcell == "FLO-MIN106" and kit == "SQK-RBK004":
         return "dna_r9.4.1_450bps_flipflop.cfg"
     else:
         print(f"Config file not defined for {kit}, {flowcell}, and {platform} combination.")
