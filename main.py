@@ -100,7 +100,7 @@ def get_guppy_config(flowcell, kit, platform):
     """
 
     ## Promethion
-    if platform == "promethion":
+    if platform == "PromethION":
         return "dna_r9.4.1_450bps_flipflop.cfg"
     elif  flowcell == "FLO-MIN107" and kit == "SQK-RAD003":
         return "dna_r9.5_450bps.cfg"
@@ -255,7 +255,7 @@ def launch_merge_bams(metadata, ref_name):
 
     job = remote.run_remote(
         mapping.merge_bams, _jobmanager(),
-        job_name="merge_bams", args=args, job_dir="output",
+        job_name=f"merge_bams-{ref_name}", args=args, job_dir="output",
         overwrite=True, njobs=njobs, queue="owners,msalit,normal", cpus=4, mem="24g")
 
     print(jobmanagers.wait_for_jobs([job], progress=True, wait=5.0))
