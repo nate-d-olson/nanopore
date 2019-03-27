@@ -16,7 +16,7 @@ try:
 except ImportError:
     r = None
 
-BASE_PATH = "/oak/stanford/groups/msalit/nspies/nanopore"
+BASE_PATH = "/scratch/groups/msalit/nanopore"
 
 
 def plot_coverages(lengths, main=""):
@@ -122,8 +122,8 @@ def get_fastq_stats(path):
     return result
 
 
-def bam_path(run_name):
-    path = f"{BASE_PATH}/raw/{run_name}/aln/{run_name}.combined.sorted.bam"
+def bam_path(run_name, ref_name):
+    path = f"{BASE_PATH}/raw/{run_name}/aln_{ref_name}/{run_name}.combined.sorted.bam"
     return path
         
 def get_bam_stats(bam_path):
