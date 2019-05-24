@@ -20,7 +20,7 @@ combine_fast5s () {
             echo ${args}
 
             combined_fast5=${output}.raw_fast5s.${chunk}.tar
-            python3 fast5_archives.py ${combined_fast5} ${args}
+            python3 ${pipe_dir}/fast5_archives.py ${combined_fast5} ${args}
             let chunk++
             args=""
             total_size=0
@@ -37,13 +37,13 @@ combine_fast5s () {
     # do one final flush
     echo "FINAL FLUSH..."
     echo ${args}
-    python3 fast5_archives.py ${combined_fast5} ${args}
+    python3 ${pipe_dir}/fast5_archives.py ${combined_fast5} ${args}
 }
 
 
 cat_fastqs () {
     echo "Concatenating fastqs..."
-    fastq_dirs=`find /oak/stanford/groups/msalit/nspies/nanopore/raw -maxdepth 2 -name "fastq"`
+    fastq_dirs=`find /scratch/groups/msalit/nanopore/raw -maxdepth 2 -name "fastq"`
 
     if [ -e ${fastq} ]; then
         rm ${fastq}
@@ -69,9 +69,9 @@ validate_combined_fastq () {
     echo "Collected ${read_count} reads"
 }
 
-cat_summary_seq(){
+cat_summary_seq (){
     echo "Concatenating seq summary files..."
-    fastq_dirs=`find /oak/stanford/groups/msalit/nspies/nanopore/raw -maxdepth 2 -name "fastq"`
+    fastq_dirs=`find /scratch/groups/msalit/nanopore/raw -maxdepth 2 -name "fastq"`
 
     if [ -e ${sequence_summary} ]; then
         rm ${sequence_summary}
@@ -81,38 +81,61 @@ cat_summary_seq(){
     for fastq_dir in ${fastq_dirs}; do
         ((count++))
         echo "${count} - ${fastq_dir}"
-        cat ${fastq_dir}/*.sequence_summary.txt >> ${sequence_summary}
+        cat ${fastq_dir}/*.sequencing_summary.txt >> ${sequence_summary}
     done   
 }
 
-cat_bams(){
+validate_summary_seq () {
+    echo "Validating Sequencing Summary Files"
+    if ! count=$(cat ${sequence_summary} | wc -l); then
+        echo "Error in concatenated file!"
+        exit $?
+    fi
+
+    seq_count=$(( count))
+    echo "Collected ${seq_count} reads (should match fastq read count)."
+}
+
+cat_bams (){
     ## Combine BAMs hs37d5
     echo "Concatenating combined bams for hs37d5..."
-    ls ${input_dir}/*/aln_hs37d5/*combined.sorted.bam | \
-        samtools cat | \
-        samtools sort -@4 -m 2G -O bam \
+    ls ${input_dir}/*/aln_hs37d5/*combined.sorted.bam > hs37d5_bam.lst
+    samtools merge  -O bam -@ ${threads} -b hs37d5_bam.lst temp_37.bam
+    samtools sort -@4 -m 2G -O bam \
         --reference ${hs37d5_ref} \
-        -o ${bam37}
+        -o ${bam37} temp_37.bam
+
+    samtools index ${bam37}
+
+#    rm temp.bam 
+#    rm hs37d5_bam.lst
 
     echo "Performing hs37d5 QC..."
     python3 quick_qc.py ${bam37} ${output}.hs37d5.qc.pdf | tee ${output}.hs37d5.qc.txt
 
-    ## Combine BAMs GRCh38
-    echo "Concatenating combined bams for GRCh38..."
-    ls ${input_dir}/*/aln_GRCh38/*combined.sorted.bam | \
-        samtools cat | \
-        samtools sort -@4 -m 2G -O bam \
-        --reference ${grch38_ref} \
-        -o ${bam38}
+     ## Combine BAMs GRCh38
+     echo "Concatenating combined bams for GRCh38..."
+#     ls ${input_dir}/*/aln_GRCh38/*combined.sorted.bam > GRCh38_bam.lst
+#     samtools merge  -O bam -@ ${threads} -b GRCh38_bam.lst temp.bam
+#     samtools sort -@4 -m 4G -O bam \
+#         --reference ${grch38_ref} \
+#         -o ${bam38} temp.bam
     
-    samtools index ${bam38}
+#     samtools index ${bam38}
 
-    echo "Performing GRCh38 QC..."
-    python3 quick_qc.py ${bam38} ${output}.GRCh38.qc.pdf | tee ${output}.GRCh38.qc.txt
+#     rm temp.bam
+#     rm GRCh38_bam.lst
+
+     echo "Performing GRCh38 QC..."
+     python3 quick_qc.py ${bam38} ${output}.GRCh38.qc.pdf | tee ${output}.GRCh38.qc.txt
 }
 
-validate_combined_bams(){
-
+validate_combined_bams (){
+    echo "Validating hs37d5 combined bam"
+    samtools quickcheck ${bam37}
+    
+     echo "Validating GRCh38 combined bam"
+     samtools quickcheck ${bam38}
 }
 
 
@@ -123,7 +146,7 @@ fi
 
 
 output=$1
-threads=12
+threads=8
 
 if [ -z ${output} ]; then
     echo "Need to specify the release name as argument 1 to this script"
@@ -135,20 +158,24 @@ if [ "${output:0:1}" = "/" ]; then
     exit
 fi
 
-input_dir=/scratch/groups/msalit/nanopore/nanopore-test/raw
-output_dir=/scratch/groups/msalit/nanopore/nanopore-test/release/${output}
+pipe_dir=/oak/stanford/groups/msalit/ndolson/nanopore-pipeline
+input_dir=/scratch/groups/msalit/nanopore/raw
+output_dir=/scratch/groups/msalit/nanopore/release/${output}
 mkdir -p ${output_dir}
 output=$output_dir/$output
 
 ## FAST5s
-combine_fast5s
+# combine_fast5s
 
 ## FASTQs
 fastq=${output}.fastq.gz
-sequence_summary=${output}.sequence_summary.txt
+sequence_summary=${output}.sequencing_summary.txt
 
-cat_fastqs
-validate_combined_fastq
+#cat_fastqs
+#validate_combined_fastq
+#cat_summary_seq
+#validate_summary_seq
+
 
 ## BAM files
 hs37d5_ref=/oak/stanford/groups/msalit/shared/genomes/hg19/hs37d5.fa
