@@ -14,7 +14,7 @@ module load python/3.6.1 R biology samtools
 export PATH=$PATH:${BASEPATH}/msalit/ndolson/minimap2/
 export PATH=$PATH:${BASEPATH}/msalit/ndolson/pigz/
 export PATH=$PATH:${BASEPATH}/msalit/ndolson/ont-guppy-cpu/bin
-export PATH=$PATH:${BASEPATH}/msalit/ndolson/nanopore-pipeline
+export PATH=$PATH:${BASEPATH}/msalit/ndolson/nanopore-pipeline/
 
 ## Moving to scratch
 cd ${BASEPATH}/msalit/ndolson

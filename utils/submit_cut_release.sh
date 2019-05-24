@@ -1,24 +1,23 @@
 #!/usr/bin/bash
-#SBATCH -n 12 # number of cores
+#SBATCH -n 8 # number of cores
 #SBATCH --mem 48g # memory pool for all cores
-#SBATCH --job-name=cut_release
-#SBATCH --time=10:00:00
+#SBATCH --job-name=cut_release37
+#SBATCH --time=1-00:00:00
+#SBATCH --partition=msalit
 #SBATCH --mail-type=ALL
+
+export PATH=$PATH:/oak/stanford/groups/msalit/ndolson/nanopore-pipeline/
 
 ## Loading required modules
 module load python/3.6.1 R biology samtools
 
-## Moving to scratch
-cd /scratch/PI/msalit/ndolson
+cd /oak/stanford/groups/msalit/ndolson
 
 ## activating env
-source nspies_nanopore/bin/activate
-
-## moving to nanopore repo
-cd nanopore
+source nanopore_env/bin/activate
 
 ## running run release script
-bash cut_release.sh 2018-07-06
+bash nanopore-pipeline/cut_release.sh ultra-long-ont
 
 ## deactivating env
 deactivate
