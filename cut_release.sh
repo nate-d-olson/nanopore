@@ -49,7 +49,7 @@ cat_fastqs () {
         rm ${fastq}
     fi
 
-    
+
     count=0
     for fastq_dir in ${fastq_dirs}; do
         ((count++))
@@ -82,7 +82,7 @@ cat_summary_seq (){
         ((count++))
         echo "${count} - ${fastq_dir}"
         cat ${fastq_dir}/*.sequencing_summary.txt >> ${sequence_summary}
-    done   
+    done
 }
 
 validate_summary_seq () {
@@ -98,44 +98,48 @@ validate_summary_seq () {
 
 cat_bams (){
     ## Combine BAMs hs37d5
-    echo "Concatenating combined bams for hs37d5..."
-    ls ${input_dir}/*/aln_hs37d5/*combined.sorted.bam > hs37d5_bam.lst
-    samtools merge  -O bam -@ ${threads} -b hs37d5_bam.lst temp_37.bam
-    samtools sort -@4 -m 2G -O bam \
-        --reference ${hs37d5_ref} \
-        -o ${bam37} temp_37.bam
+  echo "Concatenating combined bams for hs37d5..."
+   cd $L_SCRATCH
+   ls ${input_dir}/*/aln_hs37d5/*combined.sorted.bam > hs37d5_bam.lst
+   samtools merge -f -O bam -@ ${threads} -b hs37d5_bam.lst temp_37.bam
+   samtools sort -@ ${threads} -m 4G -O bam \
+       --reference ${hs37d5_ref} \
+       -o ${bam37} temp_37.bam
 
-    samtools index ${bam37}
+   samtools index ${bam37}
 
-#    rm temp.bam 
-#    rm hs37d5_bam.lst
-
-    echo "Performing hs37d5 QC..."
-    python3 quick_qc.py ${bam37} ${output}.hs37d5.qc.pdf | tee ${output}.hs37d5.qc.txt
+   rm temp_37.bam
+   rm hs37d5_bam.lst
+    
+   ## Commenting out quick_qc.py - takes too long ....
+   #echo "Performing hs37d5 QC..."
+   #python3 quick_qc.py ${bam37} ${output}.hs37d5.qc.pdf | tee ${output}.hs37d5.qc.txt
 
      ## Combine BAMs GRCh38
-     echo "Concatenating combined bams for GRCh38..."
+#     echo "Concatenating combined bams for GRCh38..."
 #     ls ${input_dir}/*/aln_GRCh38/*combined.sorted.bam > GRCh38_bam.lst
-#     samtools merge  -O bam -@ ${threads} -b GRCh38_bam.lst temp.bam
-#     samtools sort -@4 -m 4G -O bam \
+#     samtools merge  -f -O bam -@ ${threads} -b GRCh38_bam.lst temp_38.bam
+#     samtools sort -@ ${threads} -m 4G -O bam \
 #         --reference ${grch38_ref} \
-#         -o ${bam38} temp.bam
-    
+#         -o ${bam38} temp_38.bam
+
 #     samtools index ${bam38}
 
-#     rm temp.bam
+#     rm temp_38.bam
 #     rm GRCh38_bam.lst
 
-     echo "Performing GRCh38 QC..."
-     python3 quick_qc.py ${bam38} ${output}.GRCh38.qc.pdf | tee ${output}.GRCh38.qc.txt
+     #echo "Performing GRCh38 QC..."
+     #python3 quick_qc.py ${bam38} ${output}.GRCh38.qc.pdf | tee ${output}.GRCh38.qc.txt
 }
+
+
 
 validate_combined_bams (){
     echo "Validating hs37d5 combined bam"
     samtools quickcheck ${bam37}
-    
-     echo "Validating GRCh38 combined bam"
-     samtools quickcheck ${bam38}
+
+#      echo "Validating GRCh38 combined bam"
+#      samtools quickcheck ${bam38}
 }
 
 
@@ -146,7 +150,7 @@ fi
 
 
 output=$1
-threads=8
+threads=12
 
 if [ -z ${output} ]; then
     echo "Need to specify the release name as argument 1 to this script"
@@ -171,10 +175,10 @@ output=$output_dir/$output
 fastq=${output}.fastq.gz
 sequence_summary=${output}.sequencing_summary.txt
 
-#cat_fastqs
-#validate_combined_fastq
-#cat_summary_seq
-#validate_summary_seq
+cat_fastqs
+validate_combined_fastq
+cat_summary_seq
+validate_summary_seq
 
 
 ## BAM files
@@ -183,6 +187,6 @@ grch38_ref=/oak/stanford/groups/msalit/shared/genomes/hg38/GCA_000001405.15_GRCh
 bam37=${output}_hs37d5.bam
 bam38=${output}_GRCh38.bam
 
-cat_bams
-validate_combined_bams
+# cat_bams
+# validate_combined_bams
 

@@ -19,7 +19,7 @@ def run_mapping(fastq, out_bam, read_group_args, genome_path, threads=1):
         f"PM:{read_group_args['platform_model']}\\t"
         f"LB:{read_group_args['sample']}\\t"
         f"DT:{read_group_args['date']}\\t"
-        f"PG:guppy-v2.3.1-{read_group_args['guppy_config']}\\t"
+        f"PG:guppy-v2.3.5-{read_group_args['guppy_config']}\\t"
         f"DS:Flowcell={read_group_args['flowcell_type']},kit={read_group_args['flowcell_kit']}\\t"
         f"SM:HG002"
     )
