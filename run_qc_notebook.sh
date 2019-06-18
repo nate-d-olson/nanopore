@@ -5,4 +5,4 @@ if [ -z "$1" ]; then
     exit
 fi
 
-jupyter nbconvert --execute --to html --TemplateExporter.exclude_input=True --TemplateExporter.exclude_output_prompt=True --TemplateExporter.exclude_input_prompt=True qc.ipynb --ExecutePreprocessor.timeout=600 --template full --output $1
+jupyter nbconvert --execute --to html --TemplateExporter.exclude_input=True --TemplateExporter.exclude_output_prompt=True --TemplateExporter.exclude_input_prompt=True qc.ipynb --ExecutePreprocessor.timeout=10800 --template full --output $1
