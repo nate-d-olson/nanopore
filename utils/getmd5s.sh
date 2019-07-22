@@ -5,5 +5,5 @@
 #SBATCH --time=24:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --partition=msalit
-
-md5sum ultra-long-ont/* > md5sum.chk 
+cd $GROUP_SCRATCH/nanopore/release/
+md5sum ultra-long-ont/* > ultra-long-ont_md5sum.chk 

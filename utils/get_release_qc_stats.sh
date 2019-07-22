@@ -22,8 +22,8 @@ source nanopore_env/bin/activate
 cd /scratch/groups/msalit/nanopore/release/ultra-long-ont
 
 python3 /oak/stanford/groups/msalit/ndolson/nanopore-pipeline/quick_qc.py \
-		ultra-long-ont_GRCh38.bam \
-		ultra-long-ont_GRCh38.qc.pdf | tee ultra-long-ont.GRCh38.qc.txt
+		ultra-long-ont_hs37d5.bam \
+		ultra-long-ont_hs37d5.qc.pdf | tee ultra-long-ont.hs37d5.qc.txt
 
 python3 /oak/stanford/groups/msalit/ndolson/nanopore-pipeline/quick_qc.py \
 		ultra-long-ont_GRCh38.bam \
